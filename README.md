@@ -9,7 +9,8 @@ Zero runtime dependencies (stdlib only). The model is a `Protocol`, not an SDK.
 
 ```bash
 uv sync
-uv run python -m kg_agent.demo   # walks through all three capabilities
+uv run python -m kg_agent.demo        # walks through all three capabilities
+uv run python -m kg_agent.demo_deps   # ...over a real uv.lock as the world model
 uv run python -m kg_agent.demo --live   # ...using a real model via OpenRouter
 uv run pytest -q
 ```
@@ -92,7 +93,55 @@ RelationSpec("located_at", functional=True, range="Lab")   # rebinds instead of 
 RelationSpec("requires", transitive=True, dependency=True) # planner traverses this
 ```
 
-`default_ontology()` ships a scientific vocabulary; build your own `Ontology` for another domain.
+`default_ontology()` ships a scientific vocabulary; build your own `Ontology` for another domain
+(`lock_ontology()` in `kg_agent/demo_deps.py` is one, written from scratch in ~30 lines).
+
+## A practical demo: upgrading a real dependency tree
+
+Nothing in `kg_agent.demo_deps` is typed in by hand. The world model is parsed from a `uv.lock`
+— this repo's own by default, or any uv project's — and the agent plans an upgrade over the real
+tree, retries off the graph, refuses what the model gets wrong about the tree, and survives a
+restart.
+
+```bash
+uv run python -m kg_agent.demo_deps
+uv run python -m kg_agent.demo_deps --lock /path/to/other/uv.lock
+```
+
+| in the lockfile | in the graph |
+| --- | --- |
+| `[[package]]` | a `Package` node (or `Project` for the virtual root), `status=locked` |
+| `version = "9.1.1"` | `pytest --pinned_to--> pytest==9.1.1` (`pinned_to` is functional) |
+| `dependencies = [{ name = "packaging" }]` | `pytest --depends_on--> packaging` (transitive; inverse `required_by` materialised) |
+| `marker = "sys_platform == 'win32'"` | a `marker` attribute on the dependency |
+| `requires-python` + `.python-version` | a `Runtime` node the project `runs_on`, and an `Interpreter` that can satisfy it |
+
+```
+goal: upgrade kg-agent's dependency tree and resync
+  stage 0: upgrade_package(colorama), upgrade_package(iniconfig), upgrade_package(packaging),
+           upgrade_package(pluggy), upgrade_package(pygments), resolve(python) [blocked: no known action]
+  stage 1: upgrade_package(pytest)
+  stage 2: resync_project(kg-agent)
+  blocked on: python
+```
+
+Stages follow dependency depth. No action satisfies a `Runtime`, so `python` is reported blocked
+rather than guessed at; the agent asks the model, and of two proposals the graph writes
+`python satisfied_by cpython-3.13` provisionally and refuses `python depends_on kg-agent` (a
+`Project` is not a `Package`). A `pluggy` download that times out is retried by reading `status`
+off the graph, not a counter in the process.
+
+The upgrade step for `pytest` observes a fluent, wrong changelog summary. Each error is caught by a
+different declared semantic:
+
+| the claim | the rule | verdict |
+| --- | --- | --- |
+| `pytest depends_on tomli` | the policy refuses entities the lock never resolved | `ill_formed` — unknown entity |
+| `packaging depends_on pytest` | `depends_on` is incompatible with its own inverse | `contradicted` — the graph holds `packaging required_by pytest` |
+| `pytest pinned_to pytest==8.4.1` | `pinned_to` is functional | `ill_formed` under the strict policy; `contradicted` by the `9.1.1` pin even if new entities were allowed |
+
+Section 4 stops the run after four steps with `pluggy` marked failed, saves the graph, loads it
+into a brand-new agent with no transcript and no retry counters, and finishes the upgrade.
 
 ## Connecting a model (OpenRouter)
 
