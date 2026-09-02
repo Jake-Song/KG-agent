@@ -1,5 +1,7 @@
 # kg-agent
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/KG-agent/blob/main/notebooks/quickstart.ipynb)
+
 A knowledge graph used as an agent's **world model**, **planner state**, and **constraint on
 hallucination** — rather than as a store to answer questions from.
 
