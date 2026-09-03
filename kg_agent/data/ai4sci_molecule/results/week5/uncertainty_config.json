@@ -1,0 +1,83 @@
+{
+  "split_types": [
+    "random",
+    "scaffold_shuffled"
+  ],
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "ensemble_size": 5,
+  "architectures": [
+    "GCN",
+    "GIN",
+    "MLP"
+  ],
+  "ensembles": [
+    "MLP",
+    "GCN",
+    "GIN",
+    "GCN+GIN",
+    "GIN+MLP"
+  ],
+  "calibrations": [
+    "none",
+    "variance_scaling",
+    "variance_offset",
+    "conformal"
+  ],
+  "uncertainty_sources": [
+    "ensemble_std",
+    "similarity_distance"
+  ],
+  "acyclic_policy": "group",
+  "levels": [
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    0.95
+  ],
+  "coverage_grid": [
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    1.0
+  ],
+  "similarity_quantiles": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "bootstrap_samples": 2000,
+  "confidence": 0.95,
+  "random_repeats": 50,
+  "member_seed_base": 10000,
+  "minimum_bin_molecules": 10,
+  "headline_ensemble": "GIN",
+  "headline_calibration": "variance_offset",
+  "seed": 0,
+  "training": {
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "max_epochs": 150,
+    "patience": 20,
+    "min_delta": 0.0001,
+    "seed": 42
+  }
+}

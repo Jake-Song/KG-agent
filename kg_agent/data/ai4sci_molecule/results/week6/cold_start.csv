@@ -1,0 +1,17 @@
+regime,strategy,phase,budgets,seeds,mean_delta_rmse,ci_low,ci_high,excludes_zero
+in_domain,uncertainty,early,2,10,0.061274,-0.053287,0.169105,False
+in_domain,uncertainty,late,6,30,0.037527,0.001054,0.077903,True
+in_domain,diversity,early,2,10,0.010587,-0.085342,0.102960,False
+in_domain,diversity,late,6,30,0.075087,0.041608,0.106363,True
+in_domain,uncertainty_diversity,early,2,10,0.081436,-0.000097,0.154574,False
+in_domain,uncertainty_diversity,late,6,30,0.079739,0.041945,0.119484,True
+in_domain,oracle_error,early,2,10,-0.111069,-0.228774,0.005861,False
+in_domain,oracle_error,late,6,30,-0.056447,-0.077455,-0.036806,True
+out_of_scaffold,uncertainty,early,2,10,0.073558,-0.074000,0.210416,False
+out_of_scaffold,uncertainty,late,6,30,0.000144,-0.054337,0.053020,False
+out_of_scaffold,diversity,early,2,10,-0.060147,-0.178219,0.042209,False
+out_of_scaffold,diversity,late,6,30,-0.103787,-0.172384,-0.038336,True
+out_of_scaffold,uncertainty_diversity,early,2,10,0.052257,-0.042529,0.141429,False
+out_of_scaffold,uncertainty_diversity,late,6,30,-0.085159,-0.137692,-0.026302,True
+out_of_scaffold,oracle_error,early,2,10,-0.066150,-0.206617,0.057843,False
+out_of_scaffold,oracle_error,late,6,30,-0.080952,-0.137065,-0.023645,True

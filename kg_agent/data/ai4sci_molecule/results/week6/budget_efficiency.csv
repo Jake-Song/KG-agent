@@ -1,0 +1,11 @@
+regime,strategy,target_rmse,final_rmse,labels_to_target,labels_saved,speedup,normalized_alc,reaches_target
+in_domain,random,0.741529,0.741529,500.000000,0.000000,1.000000,0.944204,True
+in_domain,uncertainty,0.741529,0.720889,482.203609,17.796391,1.046563,0.988958,True
+in_domain,diversity,0.741529,0.791788,,,,1.000025,False
+in_domain,uncertainty_diversity,0.741529,0.803571,,,,1.020490,False
+in_domain,oracle_error,0.741529,0.688387,387.723929,112.276071,1.390222,0.877423,True
+out_of_scaffold,random,1.089152,1.089152,500.000000,0.000000,1.000000,1.265379,True
+out_of_scaffold,uncertainty,1.089152,1.105317,,,,1.282866,False
+out_of_scaffold,diversity,1.089152,1.010344,333.714922,166.285078,1.711487,1.177427,True
+out_of_scaffold,uncertainty_diversity,1.089152,1.022343,382.044772,117.955228,1.418215,1.218749,True
+out_of_scaffold,oracle_error,1.089152,1.115909,,,,1.186454,False

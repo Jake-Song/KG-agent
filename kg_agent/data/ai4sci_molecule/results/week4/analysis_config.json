@@ -1,0 +1,73 @@
+{
+  "regimes": [
+    "in_domain",
+    "out_of_scaffold"
+  ],
+  "models": [
+    "Dummy (mean)",
+    "Linear",
+    "MLP",
+    "GCN",
+    "GIN"
+  ],
+  "properties": [
+    "MolWt",
+    "MolLogP",
+    "TPSA",
+    "NumRotatableBonds",
+    "AromaticAtomFraction",
+    "HeavyAtomCount",
+    "NumRings",
+    "NumAromaticRings",
+    "NumAliphaticRings",
+    "NumHeteroatoms",
+    "FractionCSP3",
+    "NumHDonors",
+    "NumHAcceptors"
+  ],
+  "headline_properties": [
+    "MolWt",
+    "MolLogP",
+    "NumAromaticRings",
+    "FractionCSP3"
+  ],
+  "diagnostic_models": [
+    "MLP",
+    "GIN"
+  ],
+  "control_features": [
+    "baseline_absolute_error",
+    "nearest_train_similarity"
+  ],
+  "regime_map": [
+    [
+      "random",
+      "in_domain"
+    ],
+    [
+      "scaffold",
+      "out_of_scaffold"
+    ],
+    [
+      "scaffold_shuffled",
+      "out_of_scaffold"
+    ]
+  ],
+  "min_baseline_error": 0.25,
+  "property_quantiles": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "minimum_scaffold_molecules": 3,
+  "bootstrap_samples": 2000,
+  "confidence": 0.95,
+  "importance_folds": 5,
+  "importance_repeats": 20,
+  "importance_minimum_molecules": 60,
+  "case_count": 5,
+  "case_model": "GIN",
+  "seed": 0
+}

@@ -1,0 +1,460 @@
+{
+  "question": "Does letting the model choose which molecules to measure save experiments against choosing at random, and does the saving survive out of scaffold?",
+  "configuration": {
+    "split_types": [
+      "random",
+      "scaffold_shuffled"
+    ],
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "strategies": [
+      "random",
+      "uncertainty",
+      "diversity",
+      "uncertainty_diversity",
+      "oracle_error"
+    ],
+    "architecture": "GIN",
+    "ensemble_size": 3,
+    "budgets": [
+      100,
+      150,
+      200,
+      250,
+      300,
+      350,
+      400,
+      450,
+      500
+    ],
+    "validation_fraction": 0.2,
+    "baseline_strategy": "random",
+    "headline_strategy": "uncertainty",
+    "oracle_strategies": [
+      "oracle_error"
+    ],
+    "trajectories": 50
+  },
+  "headline": [
+    {
+      "regime": "in_domain",
+      "strategy": "uncertainty",
+      "target_rmse": 0.7415288,
+      "final_rmse": 0.7208894,
+      "labels_to_target": 482.2036090475,
+      "labels_saved": 17.7963909525,
+      "speedup": 1.0465625926,
+      "normalized_alc": 0.9889580125,
+      "reaches_target": true
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "uncertainty",
+      "target_rmse": 1.089152,
+      "final_rmse": 1.1053168,
+      "labels_to_target": null,
+      "labels_saved": null,
+      "speedup": null,
+      "normalized_alc": 1.2828656,
+      "reaches_target": false
+    }
+  ],
+  "budget_efficiency": [
+    {
+      "regime": "in_domain",
+      "strategy": "random",
+      "target_rmse": 0.7415288,
+      "final_rmse": 0.7415288,
+      "labels_to_target": 500.0,
+      "labels_saved": 0.0,
+      "speedup": 1.0,
+      "normalized_alc": 0.944204325,
+      "reaches_target": true
+    },
+    {
+      "regime": "in_domain",
+      "strategy": "uncertainty",
+      "target_rmse": 0.7415288,
+      "final_rmse": 0.7208894,
+      "labels_to_target": 482.2036090475,
+      "labels_saved": 17.7963909525,
+      "speedup": 1.0465625926,
+      "normalized_alc": 0.9889580125,
+      "reaches_target": true
+    },
+    {
+      "regime": "in_domain",
+      "strategy": "diversity",
+      "target_rmse": 0.7415288,
+      "final_rmse": 0.7917876,
+      "labels_to_target": null,
+      "labels_saved": null,
+      "speedup": null,
+      "normalized_alc": 1.00002545,
+      "reaches_target": false
+    },
+    {
+      "regime": "in_domain",
+      "strategy": "uncertainty_diversity",
+      "target_rmse": 0.7415288,
+      "final_rmse": 0.8035708,
+      "labels_to_target": null,
+      "labels_saved": null,
+      "speedup": null,
+      "normalized_alc": 1.020490025,
+      "reaches_target": false
+    },
+    {
+      "regime": "in_domain",
+      "strategy": "oracle_error",
+      "target_rmse": 0.7415288,
+      "final_rmse": 0.6883872,
+      "labels_to_target": 387.7239291873,
+      "labels_saved": 112.2760708127,
+      "speedup": 1.3902215263,
+      "normalized_alc": 0.87742295,
+      "reaches_target": true
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "random",
+      "target_rmse": 1.089152,
+      "final_rmse": 1.089152,
+      "labels_to_target": 500.0,
+      "labels_saved": 0.0,
+      "speedup": 1.0,
+      "normalized_alc": 1.265378625,
+      "reaches_target": true
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "uncertainty",
+      "target_rmse": 1.089152,
+      "final_rmse": 1.1053168,
+      "labels_to_target": null,
+      "labels_saved": null,
+      "speedup": null,
+      "normalized_alc": 1.2828656,
+      "reaches_target": false
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "diversity",
+      "target_rmse": 1.089152,
+      "final_rmse": 1.0103438,
+      "labels_to_target": 333.7149224004,
+      "labels_saved": 166.2850775996,
+      "speedup": 1.7114867801,
+      "normalized_alc": 1.1774268625,
+      "reaches_target": true
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "uncertainty_diversity",
+      "target_rmse": 1.089152,
+      "final_rmse": 1.0223426,
+      "labels_to_target": 382.0447724477,
+      "labels_saved": 117.9552275523,
+      "speedup": 1.4182145499,
+      "normalized_alc": 1.2187490125,
+      "reaches_target": true
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "oracle_error",
+      "target_rmse": 1.089152,
+      "final_rmse": 1.1159094,
+      "labels_to_target": null,
+      "labels_saved": null,
+      "speedup": null,
+      "normalized_alc": 1.1864543375,
+      "reaches_target": false
+    }
+  ],
+  "cold_start": [
+    {
+      "regime": "in_domain",
+      "strategy": "uncertainty",
+      "phase": "early",
+      "budgets": 2,
+      "seeds": 10,
+      "mean_delta_rmse": 0.0612742,
+      "ci_low": -0.05328717,
+      "ci_high": 0.1691051625,
+      "excludes_zero": false
+    },
+    {
+      "regime": "in_domain",
+      "strategy": "uncertainty",
+      "phase": "late",
+      "budgets": 6,
+      "seeds": 30,
+      "mean_delta_rmse": 0.0375269,
+      "ci_low": 0.0010535458,
+      "ci_high": 0.0779033575,
+      "excludes_zero": true
+    },
+    {
+      "regime": "in_domain",
+      "strategy": "diversity",
+      "phase": "early",
+      "budgets": 2,
+      "seeds": 10,
+      "mean_delta_rmse": 0.0105874,
+      "ci_low": -0.085341625,
+      "ci_high": 0.1029598725,
+      "excludes_zero": false
+    },
+    {
+      "regime": "in_domain",
+      "strategy": "diversity",
+      "phase": "late",
+      "budgets": 6,
+      "seeds": 30,
+      "mean_delta_rmse": 0.0750872667,
+      "ci_low": 0.0416080767,
+      "ci_high": 0.1063628058,
+      "excludes_zero": true
+    },
+    {
+      "regime": "in_domain",
+      "strategy": "uncertainty_diversity",
+      "phase": "early",
+      "budgets": 2,
+      "seeds": 10,
+      "mean_delta_rmse": 0.0814356,
+      "ci_low": -9.723e-05,
+      "ci_high": 0.1545738575,
+      "excludes_zero": false
+    },
+    {
+      "regime": "in_domain",
+      "strategy": "uncertainty_diversity",
+      "phase": "late",
+      "budgets": 6,
+      "seeds": 30,
+      "mean_delta_rmse": 0.0797392333,
+      "ci_low": 0.0419450267,
+      "ci_high": 0.1194843542,
+      "excludes_zero": true
+    },
+    {
+      "regime": "in_domain",
+      "strategy": "oracle_error",
+      "phase": "early",
+      "budgets": 2,
+      "seeds": 10,
+      "mean_delta_rmse": -0.1110694,
+      "ci_low": -0.2287736125,
+      "ci_high": 0.00586103,
+      "excludes_zero": false
+    },
+    {
+      "regime": "in_domain",
+      "strategy": "oracle_error",
+      "phase": "late",
+      "budgets": 6,
+      "seeds": 30,
+      "mean_delta_rmse": -0.0564471667,
+      "ci_low": -0.0774546358,
+      "ci_high": -0.0368060783,
+      "excludes_zero": true
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "uncertainty",
+      "phase": "early",
+      "budgets": 2,
+      "seeds": 10,
+      "mean_delta_rmse": 0.0735583,
+      "ci_low": -0.07399966,
+      "ci_high": 0.2104162675,
+      "excludes_zero": false
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "uncertainty",
+      "phase": "late",
+      "budgets": 6,
+      "seeds": 30,
+      "mean_delta_rmse": 0.0001436,
+      "ci_low": -0.0543373967,
+      "ci_high": 0.0530199875,
+      "excludes_zero": false
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "diversity",
+      "phase": "early",
+      "budgets": 2,
+      "seeds": 10,
+      "mean_delta_rmse": -0.0601469,
+      "ci_low": -0.178218545,
+      "ci_high": 0.0422092725,
+      "excludes_zero": false
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "diversity",
+      "phase": "late",
+      "budgets": 6,
+      "seeds": 30,
+      "mean_delta_rmse": -0.1037874,
+      "ci_low": -0.1723837008,
+      "ci_high": -0.0383358308,
+      "excludes_zero": true
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "uncertainty_diversity",
+      "phase": "early",
+      "budgets": 2,
+      "seeds": 10,
+      "mean_delta_rmse": 0.0522572,
+      "ci_low": -0.0425292875,
+      "ci_high": 0.141428635,
+      "excludes_zero": false
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "uncertainty_diversity",
+      "phase": "late",
+      "budgets": 6,
+      "seeds": 30,
+      "mean_delta_rmse": -0.0851593333,
+      "ci_low": -0.1376919433,
+      "ci_high": -0.0263019142,
+      "excludes_zero": true
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "oracle_error",
+      "phase": "early",
+      "budgets": 2,
+      "seeds": 10,
+      "mean_delta_rmse": -0.0661504,
+      "ci_low": -0.2066170575,
+      "ci_high": 0.057843055,
+      "excludes_zero": false
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "oracle_error",
+      "phase": "late",
+      "budgets": 6,
+      "seeds": 30,
+      "mean_delta_rmse": -0.0809524667,
+      "ci_low": -0.1370652267,
+      "ci_high": -0.02364492,
+      "excludes_zero": true
+    }
+  ],
+  "final_comparison": [
+    {
+      "regime": "in_domain",
+      "strategy": "uncertainty",
+      "budget": 500,
+      "seeds": 5,
+      "mean_delta_rmse": -0.0206394,
+      "ci_low": -0.0482234,
+      "ci_high": 0.0048938,
+      "excludes_zero": false,
+      "wins": 3
+    },
+    {
+      "regime": "in_domain",
+      "strategy": "diversity",
+      "budget": 500,
+      "seeds": 5,
+      "mean_delta_rmse": 0.0502588,
+      "ci_low": -0.0504372,
+      "ci_high": 0.163729,
+      "excludes_zero": false,
+      "wins": 2
+    },
+    {
+      "regime": "in_domain",
+      "strategy": "uncertainty_diversity",
+      "budget": 500,
+      "seeds": 5,
+      "mean_delta_rmse": 0.062042,
+      "ci_low": -0.0159746,
+      "ci_high": 0.1400586,
+      "excludes_zero": false,
+      "wins": 2
+    },
+    {
+      "regime": "in_domain",
+      "strategy": "oracle_error",
+      "budget": 500,
+      "seeds": 5,
+      "mean_delta_rmse": -0.0531416,
+      "ci_low": -0.0884174,
+      "ci_high": -0.009551,
+      "excludes_zero": true,
+      "wins": 4
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "uncertainty",
+      "budget": 500,
+      "seeds": 5,
+      "mean_delta_rmse": 0.0161648,
+      "ci_low": -0.0591488,
+      "ci_high": 0.1155848,
+      "excludes_zero": false,
+      "wins": 3
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "diversity",
+      "budget": 500,
+      "seeds": 5,
+      "mean_delta_rmse": -0.0788082,
+      "ci_low": -0.197113,
+      "ci_high": 0.0837314,
+      "excludes_zero": false,
+      "wins": 4
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "uncertainty_diversity",
+      "budget": 500,
+      "seeds": 5,
+      "mean_delta_rmse": -0.0668094,
+      "ci_low": -0.206431,
+      "ci_high": 0.088814,
+      "excludes_zero": false,
+      "wins": 4
+    },
+    {
+      "regime": "out_of_scaffold",
+      "strategy": "oracle_error",
+      "budget": 500,
+      "seeds": 5,
+      "mean_delta_rmse": 0.0267574,
+      "ci_low": -0.0869946,
+      "ci_high": 0.1944802,
+      "excludes_zero": false,
+      "wins": 3
+    }
+  ],
+  "caveats": [
+    "The labels already exist: this is a simulation of experiment selection. oracle_error reads the withheld labels and is an upper bound rather than a usable policy.",
+    "Validation molecules are measured molecules and are counted in the budget.",
+    "5 outer seeds give wide bootstrap intervals; the paired comparison is what carries the evidence."
+  ],
+  "environment": {
+    "python": "3.13.7",
+    "torch": "2.13.0+cu130",
+    "device": "cuda",
+    "cuda_device": "NVIDIA GeForce RTX 2080 SUPER",
+    "numpy": "2.5.2",
+    "pandas": "3.0.5"
+  }
+}

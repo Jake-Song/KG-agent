@@ -1,0 +1,151 @@
+split_type,seed,model,representation,subset,RMSE,MAE,R2
+random,0,Dummy (mean),RDKit descriptors,validation,2.231262,1.730071,-0.000927
+random,0,Dummy (mean),RDKit descriptors,test,2.185159,1.772746,-0.000447
+random,0,Linear,RDKit descriptors,validation,0.950915,0.745209,0.818204
+random,0,Linear,RDKit descriptors,test,0.983870,0.769469,0.797183
+random,0,MLP,RDKit descriptors,validation,0.639859,0.490902,0.917687
+random,0,MLP,RDKit descriptors,test,0.682580,0.561636,0.902381
+random,0,GCN,Molecular graph,validation,0.649750,0.515051,0.915122
+random,0,GCN,Molecular graph,test,0.595239,0.462680,0.925765
+random,0,GIN,Molecular graph,validation,0.667168,0.529685,0.910510
+random,0,GIN,Molecular graph,test,0.672328,0.521741,0.905291
+random,1,Dummy (mean),RDKit descriptors,validation,1.924322,1.501641,-0.001335
+random,1,Dummy (mean),RDKit descriptors,test,2.044338,1.667951,-0.003302
+random,1,Linear,RDKit descriptors,validation,0.979272,0.734266,0.740683
+random,1,Linear,RDKit descriptors,test,0.998278,0.777529,0.760763
+random,1,MLP,RDKit descriptors,validation,0.823677,0.633731,0.816541
+random,1,MLP,RDKit descriptors,test,0.838105,0.673570,0.831375
+random,1,GCN,Molecular graph,validation,0.707550,0.557024,0.864625
+random,1,GCN,Molecular graph,test,0.752775,0.573698,0.863963
+random,1,GIN,Molecular graph,validation,0.618777,0.455248,0.896464
+random,1,GIN,Molecular graph,test,0.731753,0.564203,0.871455
+random,2,Dummy (mean),RDKit descriptors,validation,1.965921,1.544807,-0.002223
+random,2,Dummy (mean),RDKit descriptors,test,2.343428,1.844147,-0.025617
+random,2,Linear,RDKit descriptors,validation,0.922889,0.747911,0.779133
+random,2,Linear,RDKit descriptors,test,1.023035,0.793499,0.804538
+random,2,MLP,RDKit descriptors,validation,0.754502,0.593765,0.852377
+random,2,MLP,RDKit descriptors,test,0.756258,0.620901,0.893188
+random,2,GCN,Molecular graph,validation,0.611241,0.483740,0.903115
+random,2,GCN,Molecular graph,test,1.627110,0.707444,0.505558
+random,2,GIN,Molecular graph,validation,0.612820,0.458461,0.902614
+random,2,GIN,Molecular graph,test,0.744461,0.539032,0.896494
+random,3,Dummy (mean),RDKit descriptors,validation,1.856770,1.453561,-0.016255
+random,3,Dummy (mean),RDKit descriptors,test,2.216598,1.758517,-0.004585
+random,3,Linear,RDKit descriptors,validation,0.912861,0.699185,0.754362
+random,3,Linear,RDKit descriptors,test,1.005824,0.788636,0.793150
+random,3,MLP,RDKit descriptors,validation,0.705629,0.539964,0.853229
+random,3,MLP,RDKit descriptors,test,0.695935,0.544796,0.900974
+random,3,GCN,Molecular graph,validation,0.674177,0.500756,0.866022
+random,3,GCN,Molecular graph,test,0.717034,0.542275,0.894878
+random,3,GIN,Molecular graph,validation,0.653206,0.497980,0.874227
+random,3,GIN,Molecular graph,test,0.629457,0.458828,0.918989
+random,4,Dummy (mean),RDKit descriptors,validation,1.756798,1.372540,-0.004096
+random,4,Dummy (mean),RDKit descriptors,test,1.987128,1.570184,-0.002544
+random,4,Linear,RDKit descriptors,validation,1.121270,0.850662,0.590973
+random,4,Linear,RDKit descriptors,test,0.981034,0.729830,0.755646
+random,4,MLP,RDKit descriptors,validation,0.761150,0.608111,0.811517
+random,4,MLP,RDKit descriptors,test,0.807449,0.639576,0.834468
+random,4,GCN,Molecular graph,validation,0.941690,0.742736,0.711499
+random,4,GCN,Molecular graph,test,0.877418,0.681591,0.804537
+random,4,GIN,Molecular graph,validation,0.613640,0.455353,0.877494
+random,4,GIN,Molecular graph,test,0.604549,0.471768,0.907207
+scaffold,0,Dummy (mean),RDKit descriptors,validation,2.260907,1.777932,-0.088142
+scaffold,0,Dummy (mean),RDKit descriptors,test,2.112142,1.646262,-0.097367
+scaffold,0,Linear,RDKit descriptors,validation,1.191430,0.951468,0.697826
+scaffold,0,Linear,RDKit descriptors,test,1.345133,0.996854,0.554922
+scaffold,0,MLP,RDKit descriptors,validation,0.979887,0.736080,0.795604
+scaffold,0,MLP,RDKit descriptors,test,0.976734,0.782897,0.765329
+scaffold,0,GCN,Molecular graph,validation,0.916764,0.659202,0.821090
+scaffold,0,GCN,Molecular graph,test,1.154914,0.910698,0.671901
+scaffold,0,GIN,Molecular graph,validation,0.941710,0.720460,0.811221
+scaffold,0,GIN,Molecular graph,test,1.211426,0.920284,0.639007
+scaffold,1,Dummy (mean),RDKit descriptors,validation,2.260907,1.777932,-0.088142
+scaffold,1,Dummy (mean),RDKit descriptors,test,2.112142,1.646262,-0.097367
+scaffold,1,Linear,RDKit descriptors,validation,1.191430,0.951468,0.697826
+scaffold,1,Linear,RDKit descriptors,test,1.345133,0.996854,0.554922
+scaffold,1,MLP,RDKit descriptors,validation,0.950094,0.719919,0.807844
+scaffold,1,MLP,RDKit descriptors,test,0.934616,0.724517,0.785132
+scaffold,1,GCN,Molecular graph,validation,0.902218,0.694012,0.826722
+scaffold,1,GCN,Molecular graph,test,1.130073,0.894896,0.685863
+scaffold,1,GIN,Molecular graph,validation,0.992526,0.769372,0.790297
+scaffold,1,GIN,Molecular graph,test,1.263082,0.973658,0.607564
+scaffold,2,Dummy (mean),RDKit descriptors,validation,2.260907,1.777932,-0.088142
+scaffold,2,Dummy (mean),RDKit descriptors,test,2.112142,1.646262,-0.097367
+scaffold,2,Linear,RDKit descriptors,validation,1.191430,0.951468,0.697826
+scaffold,2,Linear,RDKit descriptors,test,1.345133,0.996854,0.554922
+scaffold,2,MLP,RDKit descriptors,validation,0.944217,0.722416,0.810214
+scaffold,2,MLP,RDKit descriptors,test,0.933960,0.731609,0.785433
+scaffold,2,GCN,Molecular graph,validation,0.985985,0.746157,0.793052
+scaffold,2,GCN,Molecular graph,test,1.177649,0.927294,0.658856
+scaffold,2,GIN,Molecular graph,validation,0.948544,0.744583,0.808471
+scaffold,2,GIN,Molecular graph,test,1.188260,0.917192,0.652681
+scaffold,3,Dummy (mean),RDKit descriptors,validation,2.260907,1.777932,-0.088142
+scaffold,3,Dummy (mean),RDKit descriptors,test,2.112142,1.646262,-0.097367
+scaffold,3,Linear,RDKit descriptors,validation,1.191430,0.951468,0.697826
+scaffold,3,Linear,RDKit descriptors,test,1.345133,0.996854,0.554922
+scaffold,3,MLP,RDKit descriptors,validation,0.942398,0.714679,0.810945
+scaffold,3,MLP,RDKit descriptors,test,0.944119,0.744450,0.780740
+scaffold,3,GCN,Molecular graph,validation,0.960737,0.725918,0.803515
+scaffold,3,GCN,Molecular graph,test,1.240141,0.998421,0.621690
+scaffold,3,GIN,Molecular graph,validation,1.054583,0.811798,0.763255
+scaffold,3,GIN,Molecular graph,test,1.244100,0.941510,0.619271
+scaffold,4,Dummy (mean),RDKit descriptors,validation,2.260907,1.777932,-0.088142
+scaffold,4,Dummy (mean),RDKit descriptors,test,2.112142,1.646262,-0.097367
+scaffold,4,Linear,RDKit descriptors,validation,1.191430,0.951468,0.697826
+scaffold,4,Linear,RDKit descriptors,test,1.345133,0.996854,0.554922
+scaffold,4,MLP,RDKit descriptors,validation,0.950947,0.729504,0.807499
+scaffold,4,MLP,RDKit descriptors,test,0.945393,0.742166,0.780148
+scaffold,4,GCN,Molecular graph,validation,0.977785,0.723731,0.796480
+scaffold,4,GCN,Molecular graph,test,1.181486,0.942223,0.656630
+scaffold,4,GIN,Molecular graph,validation,0.982766,0.784275,0.794401
+scaffold,4,GIN,Molecular graph,test,1.159892,0.900463,0.669066
+scaffold_shuffled,0,Dummy (mean),RDKit descriptors,validation,1.559764,1.213011,-0.000256
+scaffold_shuffled,0,Dummy (mean),RDKit descriptors,test,1.524761,1.192561,-0.101858
+scaffold_shuffled,0,Linear,RDKit descriptors,validation,1.017136,0.787408,0.574646
+scaffold_shuffled,0,Linear,RDKit descriptors,test,1.081511,0.838559,0.445650
+scaffold_shuffled,0,MLP,RDKit descriptors,validation,0.901666,0.740184,0.665740
+scaffold_shuffled,0,MLP,RDKit descriptors,test,1.000423,0.693164,0.525661
+scaffold_shuffled,0,GCN,Molecular graph,validation,0.889854,0.624379,0.674440
+scaffold_shuffled,0,GCN,Molecular graph,test,1.214576,1.011697,0.300848
+scaffold_shuffled,0,GIN,Molecular graph,validation,0.869418,0.684357,0.689222
+scaffold_shuffled,0,GIN,Molecular graph,test,1.009357,0.791638,0.517151
+scaffold_shuffled,1,Dummy (mean),RDKit descriptors,validation,3.242206,2.620292,-0.728827
+scaffold_shuffled,1,Dummy (mean),RDKit descriptors,test,2.432734,1.867619,-0.314860
+scaffold_shuffled,1,Linear,RDKit descriptors,validation,0.950492,0.775200,0.851417
+scaffold_shuffled,1,Linear,RDKit descriptors,test,1.165155,0.895824,0.698382
+scaffold_shuffled,1,MLP,RDKit descriptors,validation,0.791759,0.646189,0.896901
+scaffold_shuffled,1,MLP,RDKit descriptors,test,0.926909,0.719995,0.809118
+scaffold_shuffled,1,GCN,Molecular graph,validation,1.035665,0.816370,0.823596
+scaffold_shuffled,1,GCN,Molecular graph,test,1.182384,0.935751,0.689396
+scaffold_shuffled,1,GIN,Molecular graph,validation,0.916604,0.692777,0.861824
+scaffold_shuffled,1,GIN,Molecular graph,test,1.112165,0.889877,0.725192
+scaffold_shuffled,2,Dummy (mean),RDKit descriptors,validation,2.070224,1.652202,-0.176662
+scaffold_shuffled,2,Dummy (mean),RDKit descriptors,test,2.112561,1.594904,-0.363858
+scaffold_shuffled,2,Linear,RDKit descriptors,validation,1.073923,0.837940,0.683362
+scaffold_shuffled,2,Linear,RDKit descriptors,test,1.268409,0.983626,0.508335
+scaffold_shuffled,2,MLP,RDKit descriptors,validation,0.815678,0.621943,0.817335
+scaffold_shuffled,2,MLP,RDKit descriptors,test,1.044307,0.837229,0.666722
+scaffold_shuffled,2,GCN,Molecular graph,validation,0.847901,0.675054,0.802618
+scaffold_shuffled,2,GCN,Molecular graph,test,1.262193,1.022853,0.513142
+scaffold_shuffled,2,GIN,Molecular graph,validation,0.861546,0.641473,0.796214
+scaffold_shuffled,2,GIN,Molecular graph,test,1.243091,1.018737,0.527767
+scaffold_shuffled,3,Dummy (mean),RDKit descriptors,validation,2.227132,1.788558,-0.169163
+scaffold_shuffled,3,Dummy (mean),RDKit descriptors,test,2.192308,1.685123,-0.535189
+scaffold_shuffled,3,Linear,RDKit descriptors,validation,1.192605,0.914148,0.664744
+scaffold_shuffled,3,Linear,RDKit descriptors,test,1.139631,0.865323,0.585154
+scaffold_shuffled,3,MLP,RDKit descriptors,validation,0.894523,0.706531,0.811389
+scaffold_shuffled,3,MLP,RDKit descriptors,test,0.992791,0.746210,0.685171
+scaffold_shuffled,3,GCN,Molecular graph,validation,0.959418,0.691942,0.783031
+scaffold_shuffled,3,GCN,Molecular graph,test,1.168889,0.923854,0.563579
+scaffold_shuffled,3,GIN,Molecular graph,validation,0.899735,0.712350,0.809185
+scaffold_shuffled,3,GIN,Molecular graph,test,0.986910,0.788754,0.688890
+scaffold_shuffled,4,Dummy (mean),RDKit descriptors,validation,2.164888,1.673753,-0.177141
+scaffold_shuffled,4,Dummy (mean),RDKit descriptors,test,3.113483,2.513909,-0.908379
+scaffold_shuffled,4,Linear,RDKit descriptors,validation,1.109939,0.882698,0.690575
+scaffold_shuffled,4,Linear,RDKit descriptors,test,1.038232,0.789723,0.787793
+scaffold_shuffled,4,MLP,RDKit descriptors,validation,1.123521,0.904208,0.682956
+scaffold_shuffled,4,MLP,RDKit descriptors,test,0.876728,0.661737,0.848678
+scaffold_shuffled,4,GCN,Molecular graph,validation,1.075380,0.846200,0.709543
+scaffold_shuffled,4,GCN,Molecular graph,test,1.185783,0.943480,0.723190
+scaffold_shuffled,4,GIN,Molecular graph,validation,1.117807,0.885963,0.686172
+scaffold_shuffled,4,GIN,Molecular graph,test,1.060323,0.840205,0.778666

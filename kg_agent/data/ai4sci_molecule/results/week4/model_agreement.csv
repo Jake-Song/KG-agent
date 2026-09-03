@@ -1,0 +1,21 @@
+regime,model_a,model_b,same_family,molecules,spearman,ci_low,ci_high,shared_worst_fraction,residual_spearman
+in_domain,Dummy (mean),Linear,False,470,0.312418,0.225894,0.392945,0.297872,0.513344
+in_domain,Dummy (mean),MLP,False,470,0.130219,0.036671,0.221405,0.212766,0.410253
+in_domain,Dummy (mean),GCN,False,470,0.182760,0.096617,0.271819,0.234043,0.440013
+in_domain,Dummy (mean),GIN,False,470,0.158438,0.069560,0.247758,0.212766,0.401544
+in_domain,Linear,MLP,True,470,0.482800,0.411633,0.554743,0.489362,0.736520
+in_domain,Linear,GCN,False,470,0.197930,0.111428,0.277749,0.170213,0.380521
+in_domain,Linear,GIN,False,470,0.184356,0.095198,0.266894,0.170213,0.358258
+in_domain,MLP,GCN,False,470,0.298948,0.211453,0.382095,0.340426,0.505483
+in_domain,MLP,GIN,False,470,0.311634,0.221580,0.389648,0.425532,0.509504
+in_domain,GCN,GIN,True,470,0.486386,0.405130,0.558780,0.489362,0.729976
+out_of_scaffold,Dummy (mean),Linear,False,413,0.162781,0.067406,0.261050,0.170732,0.237306
+out_of_scaffold,Dummy (mean),MLP,False,413,0.137658,0.045087,0.229805,0.170732,0.175015
+out_of_scaffold,Dummy (mean),GCN,False,413,0.294915,0.194404,0.388190,0.439024,0.526307
+out_of_scaffold,Dummy (mean),GIN,False,413,0.168874,0.068519,0.265582,0.390244,0.485707
+out_of_scaffold,Linear,MLP,True,413,0.433915,0.348493,0.515181,0.512195,0.699320
+out_of_scaffold,Linear,GCN,False,413,0.071075,-0.026595,0.169126,0.195122,0.337103
+out_of_scaffold,Linear,GIN,False,413,0.173420,0.075483,0.267811,0.268293,0.373457
+out_of_scaffold,MLP,GCN,False,413,0.193999,0.096630,0.288656,0.243902,0.331018
+out_of_scaffold,MLP,GIN,False,413,0.253644,0.153681,0.341510,0.268293,0.352992
+out_of_scaffold,GCN,GIN,True,413,0.679279,0.611934,0.736399,0.756098,0.887922

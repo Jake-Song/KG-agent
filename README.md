@@ -11,6 +11,7 @@ Zero runtime dependencies (stdlib only). The model is a `Protocol`, not an SDK.
 uv sync
 uv run python -m kg_agent.demo        # walks through all three capabilities
 uv run python -m kg_agent.demo_deps   # ...over a real uv.lock as the world model
+uv run python -m kg_agent.demo_study  # ...over a real research repository
 uv run python -m kg_agent.demo --live   # ...using a real model via OpenRouter
 uv run pytest -q
 ```
@@ -130,7 +131,8 @@ RelationSpec("requires", transitive=True, dependency=True) # planner traverses t
 ```
 
 `default_ontology()` ships a scientific vocabulary; build your own `Ontology` for another domain
-(`lock_ontology()` in `kg_agent/demo_deps.py` is one, written from scratch in ~30 lines).
+(`lock_ontology()` in `kg_agent/demo_deps.py` and `study_ontology()` in
+`kg_agent/demo_study.py` are two, each written from scratch in ~30 lines).
 
 ## A practical demo: upgrading a real dependency tree
 
@@ -198,6 +200,70 @@ different declared semantic:
 Section 4 stops the run mid-stage after four acted steps with `pluggy` marked failed, saves the
 graph, loads it into a brand-new agent with no transcript and no retry counters, and finishes the
 upgrade.
+
+## A second one: a research repository as the world model
+
+`kg_agent.demo_study` parses a real project — [ai4sci-molecule](https://github.com/Jake-Song/ai4sci-molecule),
+six weeks of molecular machine learning on ESOL — out of its `pyproject.toml`, its README, its
+`.gitignore` and the tables under `results/`. A verbatim snapshot of the small files ships in
+`kg_agent/data/ai4sci_molecule/`, so it runs anywhere; `--repo` parses a checkout instead.
+
+```bash
+uv run python -m kg_agent.demo_study
+uv run python -m kg_agent.demo_study --repo /path/to/ai4sci-molecule
+```
+
+| in the repository | in the graph |
+| --- | --- |
+| the README's `uv run python -m ai4sci_molecule.weekN` lines | a `Study` node the `Project` `requires` |
+| a week's `*_config.json` | `week6 --evaluates--> scaffold_shuffled`, and functional pins like `week6 --uses_architecture--> GIN` |
+| files under `results/weekN/` | `Artifact` nodes the study `produced` |
+| `.gitignore` entries under `results/` | the outputs a fresh clone lacks: `week3 --must_produce--> results/week3/predictions.csv` |
+| `budget_efficiency.csv`, `accuracy.csv` | `outperforms` edges between regime-scoped `Arm` nodes, ordered by error |
+| `summary.json` caveats | `Caveat` nodes the study `limits` itself with |
+| a checkout's `src/…/week*.py` imports | `week4 --derived_from--> week3` |
+
+Arms are scoped by regime (`out_of_scaffold:diversity`) for the same reason versions are scoped in
+the lockfile demo: `random` beats `diversity` in domain and loses to it out of scaffold, so
+unscoped nodes would make the graph contradict itself. Only rank-adjacent pairs are asserted —
+`outperforms` is transitive, so the rest of the order is derived rather than stored.
+
+```
+goal: rebuild what a fresh clone of ai4sci-molecule is missing
+  stage 0: resolve(esol) [blocked: no known action]
+  stage 1: materialise_split(random), materialise_split(scaffold), materialise_split(scaffold_shuffled)
+  stage 2: run_study(week3), run_study(week4), run_study(week5), run_study(week6)
+  stage 3: reproduce(ai4sci-molecule)
+  blocked on: esol
+```
+
+`data/` is gitignored, so nothing the agent can do satisfies a `Dataset`: turn 1 has no ready step
+at all, and the agent asks the model, which offers `esol satisfied_by data/MoleculeNet` (written
+provisionally) and `esol evaluates random` (refused — `evaluates` needs a `Study` subject). Asked
+which study goes first, the model front-loads `week6`, the sweep that really took 1h37m; it is
+interrupted, marked `failed`, and retried a turn later from the trajectory shards that repository
+commits on purpose.
+
+The findings are where the graph earns its keep, because the project's own headline is the
+counterintuitive one: letting the model pick which molecules to measure **never** beat random
+selection, and the only real saving came from `diversity`, out of scaffold.
+
+| the claim | the rule | verdict |
+| --- | --- | --- |
+| `out_of_scaffold:uncertainty outperforms out_of_scaffold:random` | `outperforms` is incompatible with its own inverse | `contradicted` — the table ranks `random` above it |
+| `out_of_scaffold:GIN outperforms out_of_scaffold:MLP` | same | `contradicted` — true in domain, false in the regime it was claimed for |
+| `out_of_scaffold:bald outperforms out_of_scaffold:random` | the policy refuses entities no config declares | `ill_formed` — unknown entity |
+| `week6 uses_architecture GCN` | `uses_architecture` is functional | `contradicted` — the config pins `GIN` |
+
+Every contradiction here is *kept*: the conflicting side is a parsed table, not a provisional model
+claim, and the reason names the file it came from. What the model does get to add is the study
+order — nothing in the committed tables states that week 4 reads week 3's predictions, so that
+edge is written provisionally when the run observes it, and is then used to refuse the same
+dependency stated backwards.
+
+Pointing the demo at a real checkout changes the shape rather than the story: the committed
+`splits.json` files make the splits already satisfied, so the dataset never enters the plan, and
+the study order comes from `src/ai4sci_molecule/week*.py` imports instead of from the run.
 
 ## Connecting a model (OpenRouter)
 
@@ -280,3 +346,5 @@ class MyLLM:
 | `kg_agent/openrouter.py` | `OpenRouterLLM` — live models over stdlib `urllib` |
 | `kg_agent/agent.py` | the loop: model choice, stage execution, contradiction resolution |
 | `kg_agent/demo.py` | runnable walkthrough |
+| `kg_agent/demo_deps.py` | the same three capabilities over a real `uv.lock` |
+| `kg_agent/demo_study.py` | ...and over a real research repository (`kg_agent/data/ai4sci_molecule/`) |

@@ -1,0 +1,31 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Downloaded datasets and notebook scratch files
+data/
+.ipynb_checkpoints/
+
+# Large regenerable sweep artifact (uv run python -m ai4sci_molecule.week3)
+results/week3/predictions.csv
+
+# Large regenerable per-molecule table (uv run python -m ai4sci_molecule.week4)
+results/week4/molecule_errors.csv
+
+# Large regenerable per-member table (uv run python -m ai4sci_molecule.week5)
+results/week5/member_predictions.csv
+
+# Large regenerable merged table (uv run python -m ai4sci_molecule.week6).
+# The per-trajectory shards under results/week6/ are committed on purpose: they are the
+# resume cache, and a fresh clone rebuilds every table from them without retraining.
+results/week6/test_predictions.csv
+
+# Local run logs (uv run python -m ai4sci_molecule.week6 > logs/...)
+logs/

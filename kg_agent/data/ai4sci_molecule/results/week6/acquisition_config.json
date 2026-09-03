@@ -1,0 +1,89 @@
+{
+  "config": {
+    "split_types": [
+      "random",
+      "scaffold_shuffled"
+    ],
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "strategies": [
+      "random",
+      "uncertainty",
+      "diversity",
+      "uncertainty_diversity",
+      "oracle_error"
+    ],
+    "architecture": "GIN",
+    "ensemble_size": 3,
+    "initial_labels": 100,
+    "batch_size": 50,
+    "rounds": 8,
+    "validation_fraction": 0.2,
+    "oversample_factor": 3.0,
+    "acyclic_policy": "group",
+    "fingerprint_radius": 2,
+    "fingerprint_size": 2048,
+    "bootstrap_samples": 2000,
+    "confidence": 0.95,
+    "cold_start_rounds": 2,
+    "baseline_strategy": "random",
+    "headline_strategy": "uncertainty",
+    "member_seed_base": 20000,
+    "selection_seed_base": 30000,
+    "training": {
+      "batch_size": 64,
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001,
+      "max_epochs": 150,
+      "patience": 20,
+      "min_delta": 0.0001,
+      "seed": 42
+    }
+  },
+  "training_fingerprint": {
+    "split_types": [
+      "random",
+      "scaffold_shuffled"
+    ],
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "strategies": [
+      "random",
+      "uncertainty",
+      "diversity",
+      "uncertainty_diversity",
+      "oracle_error"
+    ],
+    "architecture": "GIN",
+    "ensemble_size": 3,
+    "initial_labels": 100,
+    "batch_size": 50,
+    "rounds": 8,
+    "validation_fraction": 0.2,
+    "oversample_factor": 3.0,
+    "acyclic_policy": "group",
+    "fingerprint_radius": 2,
+    "fingerprint_size": 2048,
+    "member_seed_base": 20000,
+    "selection_seed_base": 30000,
+    "training": {
+      "batch_size": 64,
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001,
+      "max_epochs": 150,
+      "patience": 20,
+      "min_delta": 0.0001,
+      "seed": 42
+    }
+  }
+}

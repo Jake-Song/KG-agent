@@ -1,0 +1,11 @@
+regime,ensemble,representation,members,seeds,molecules,member_rmse_mean,member_rmse_std,ensemble_rmse_mean,ensemble_rmse_std,ensemble_mae_mean,ensemble_r2_mean,ensemble_gain
+in_domain,MLP,RDKit descriptors,5,3,305,0.743290,0.036674,0.724900,0.038541,0.587124,0.887416,0.018390
+in_domain,GCN,Molecular graph,5,3,305,0.953438,0.403678,0.909513,0.421811,0.572926,0.811884,0.043924
+in_domain,GIN,Molecular graph,5,3,305,0.717151,0.036836,0.660225,0.052154,0.498110,0.908276,0.056926
+in_domain,GCN+GIN,Molecular graph,10,3,305,0.835294,0.219658,0.722214,0.163231,0.517357,0.889170,0.113081
+in_domain,GIN+MLP,Mixed,10,3,305,0.730220,0.013716,0.618956,0.019546,0.486358,0.919093,0.111264
+out_of_scaffold,MLP,RDKit descriptors,5,3,262,0.965788,0.038960,0.954299,0.039256,0.715012,0.689826,0.011488
+out_of_scaffold,GCN,Molecular graph,5,3,262,1.159534,0.015225,1.114591,0.020244,0.888316,0.588312,0.044944
+out_of_scaffold,GIN,Molecular graph,5,3,262,1.072310,0.046477,1.007532,0.053674,0.799723,0.669564,0.064778
+out_of_scaffold,GCN+GIN,Molecular graph,10,3,262,1.115922,0.029809,1.041667,0.028915,0.825576,0.642604,0.074255
+out_of_scaffold,GIN+MLP,Mixed,10,3,262,1.019049,0.010267,0.851021,0.057960,0.669305,0.761337,0.168028
