@@ -34,7 +34,8 @@ class LLM(Protocol):
         """Suggest what ``node`` might require, when planning dead-ends."""
 
     def choose_action(self, plan: Plan, context: str) -> str | None:
-        """Optionally override the planner's next action by name."""
+        """Pick which ready step goes first: a bare action name or an
+        ``action(node)`` entry from ``plan.ready``.  Anything else is ignored."""
 
 
 def claims(*specs: str, source: str = "llm", confidence: float | None = None) -> list[Claim]:

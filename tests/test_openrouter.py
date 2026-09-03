@@ -98,8 +98,15 @@ def test_choose_action_only_accepts_an_action_from_the_plan():
     kg.assert_edge("Hypothesis_A", "requires", "Dataset_A")
     plan = plan_for(kg, Goal("Hypothesis_A"))
 
-    good = OpenRouterLLM(transport=FakeTransport(reply('{"action": "load_dataset"}')))
+    transport = FakeTransport(reply('{"action": "load_dataset"}'))
+    good = OpenRouterLLM(transport=transport)
     assert good.choose_action(plan, "") == "load_dataset"
+    prompt = transport.payloads[0]["messages"][1]["content"]
+    assert "- load_dataset(Dataset_A)" in prompt and "- secure_lab_access(Lab_D)" in prompt
+    assert "turn text into triples" not in transport.payloads[0]["messages"][0]["content"]
+
+    exact = OpenRouterLLM(transport=FakeTransport(reply('{"action": "load_dataset(Dataset_A)"}')))
+    assert exact.choose_action(plan, "") == "load_dataset(Dataset_A)"
 
     off_plan = OpenRouterLLM(transport=FakeTransport(reply('{"action": "launch_rocket"}')))
     assert off_plan.choose_action(plan, "") is None

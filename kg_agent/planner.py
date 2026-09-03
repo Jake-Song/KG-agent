@@ -3,8 +3,9 @@
 The graph doubles as a symbolic planner's state representation: a goal is
 resolved by backward-chaining over the ontology's dependency predicates
 (``requires``, ``depends_on``, ``measured_by``), pruning anything the world
-model already records as satisfied.  A model can propose candidate steps, but
-the graph decides which are admissible and in what order.
+model already records as satisfied.  A model can propose candidate steps and
+pick which *ready* step goes first, but the graph decides which are admissible
+and which stage they belong to.
 """
 
 from __future__ import annotations
@@ -81,6 +82,31 @@ class Plan:
 
     def next_step(self) -> PlanStep | None:
         return self.steps[0] if self.steps else None
+
+    @property
+    def ready(self) -> list[PlanStep]:
+        """The actionable frontier: stage-0 steps (no pending dependency) that are not blocked."""
+        return [s for s in (self.stages[0] if self.stages else []) if not s.blocked]
+
+    def find(self, choice: str | None) -> PlanStep | None:
+        """Resolve a model's reply to a ready step, or ``None``.
+
+        Accepts the exact ``str(step)`` form (``upgrade_package(pluggy)``) first,
+        then a bare action name, matched against the first ready step that has
+        it.  Only :attr:`ready` steps qualify, so a model can never pick a step
+        whose dependencies are unmet.
+        """
+        if not choice:
+            return None
+        choice = choice.strip()
+        ready = self.ready
+        for step in ready:
+            if str(step) == choice:
+                return step
+        for step in ready:
+            if step.action == choice:
+                return step
+        return None
 
     def render(self) -> str:
         lines = [f"goal: {self.goal}"]

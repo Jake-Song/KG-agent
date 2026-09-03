@@ -75,6 +75,23 @@ Your only job is to turn text into triples. Rules:
 
 Return an empty list when the text asserts no relationship."""
 
+CHOOSE_SYSTEM_PROMPT = """\
+You pick which ready action an autonomous agent should take next.
+
+Every listed action is admissible and its prerequisites are met; you only choose the order.
+Reply with JSON: {"action": "<one entry from the list, exactly as written>"}."""
+
+ACTION_SCHEMA: dict[str, Any] = {
+    "name": "action",
+    "strict": True,
+    "schema": {
+        "type": "object",
+        "properties": {"action": {"type": "string"}},
+        "required": ["action"],
+        "additionalProperties": False,
+    },
+}
+
 
 class OpenRouterError(RuntimeError):
     """A non-recoverable OpenRouter response."""
@@ -164,20 +181,27 @@ class OpenRouterLLM:
         return self._claims(prompt)
 
     def choose_action(self, plan: Plan, context: str) -> str | None:
-        """Let the model reorder the frontier; anything off-plan is ignored."""
-        options = [step for step in plan.steps if not step.depends_on]
+        """Let the model pick which ready step goes first; anything off-plan is ignored.
+
+        Options are listed as ``action(node)`` so steps sharing an action stay
+        distinguishable; a bare action name is accepted too.  The reply is
+        returned as given once :meth:`Plan.find` resolves it to a ready step.
+        """
+        options = plan.ready
         if len(options) < 2:
             return None
-        listing = "\n".join(f"- {step.action} (on {step.node})" for step in options)
+        listing = "\n".join(f"- {step}" for step in options)
         prompt = (f"{self._context_block(context)}"
-                  f"Goal: {plan.goal}\n\nReady actions:\n{listing}\n\n"
-                  'Reply with JSON: {"action": "<one action name from the list>"}.')
-        raw = self._chat(prompt, schema=None)
+                  f"Goal: {plan.goal}\n\nReady actions (any order is valid):\n{listing}\n\n"
+                  'Reply with JSON: {"action": "<one entry from the list, exactly as written>"}.')
+        raw = self._chat(prompt, schema=ACTION_SCHEMA, system=CHOOSE_SYSTEM_PROMPT)
         try:
             choice = json.loads(_strip_fences(raw)).get("action")
         except (json.JSONDecodeError, AttributeError):
             return None
-        return choice if any(step.action == choice for step in options) else None
+        if not isinstance(choice, str):
+            return None
+        return choice.strip() if plan.find(choice) is not None else None
 
     # ------------------------------------------------------------------ helpers
 

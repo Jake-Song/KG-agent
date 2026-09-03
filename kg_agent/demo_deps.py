@@ -135,6 +135,9 @@ def goal_for(kg: KnowledgeGraph) -> Goal:
 def scripted_llm() -> ScriptedLLM:
     """What a model would extract from each observation -- traps included."""
     return ScriptedLLM(
+        # Asked which ready step goes first, the model front-loads the slow wheel
+        # download; the planner alone would have gone alphabetically (colorama first).
+        action=lambda plan, context: "upgrade_package(pluggy)",
         claims_by_observation={
             "pygments is current": claims("pygments pinned_to pygments==2.21.0"),
             "pytest upgraded": claims(
@@ -156,7 +159,7 @@ def scripted_llm() -> ScriptedLLM:
 
 
 def build_agent(kg: KnowledgeGraph, llm=None) -> KGAgent:
-    agent = KGAgent(kg, llm or scripted_llm(), actions=DEPS_ACTIONS,
+    agent = KGAgent(kg, llm or scripted_llm(), actions=DEPS_ACTIONS, execute="stage",
                     policy=IngestPolicy(accept_unknown=True, unknown_confidence=0.6,
                                         allow_new_entities=False))
 
@@ -208,11 +211,16 @@ def demo_planning(kg: KnowledgeGraph, llm=None) -> None:
     print("No action satisfies a Runtime, so python is reported blocked rather than guessed at.")
 
     agent = build_agent(kg, llm)
-    print(f"\nclaim extraction by: {type(agent.llm).__name__}"
+    print(f"\nclaim extraction and step choice by: {type(agent.llm).__name__}"
           + (f" ({agent.llm.model})" if hasattr(agent.llm, "model") else ""))
-    print("\n--- running the loop: observe -> update -> query -> plan -> act -> observe ---")
+    print("Each turn acts on the whole ready frontier (execute='stage'). With five packages")
+    print("ready at once the model is asked which goes first; only a step on the plan is taken.")
+    print("\n--- running the loop: observe -> update -> query -> plan -> choose -> act -> observe ---")
     run = agent.run(goal)
     print(run.render())
+    first = run.records[0]
+    print(f"\nturn 1 opened with {first.step} ({first.chosen_by}'s choice); it failed, so it fell")
+    print("into turn 2's frontier and was retried off the graph's status=failed, not a counter.")
 
     banner("...how the blocked interpreter got unblocked")
     print("Hitting the blocked leaf, the agent asked the model what python needs.")
@@ -227,6 +235,8 @@ def demo_planning(kg: KnowledgeGraph, llm=None) -> None:
     print("\nreplan after the run:")
     print(plan_for(kg, goal, actions=DEPS_ACTIONS).render())
     print(f"\nmessage history retained: 0 turns (the upgrade lives in the graph, rev {kg.revision})")
+    for resolution in run.resolutions:
+        print(f"contradiction {resolution.decision}: {resolution.verdict.claim} -- {resolution.reason}")
 
 
 def demo_verification(kg: KnowledgeGraph) -> None:
@@ -273,7 +283,7 @@ def demo_restart(lock_path: Path, llm=None) -> None:
     goal = goal_for(kg)
     first = build_agent(kg, llm)
     partial = first.run(goal, max_steps=4)
-    print(f"process 1 stopped after {len(partial.records)} acted steps: {partial.reason}")
+    print(f"process 1 stopped mid-stage after {len(partial.records)} acted steps: {partial.reason}")
     print(partial.render())
 
     path = Path(tempfile.gettempdir()) / "kg_agent_deps.json"

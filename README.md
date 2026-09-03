@@ -25,8 +25,8 @@ Experiment_42
  └── status       = failed
 ```
 
-The agent runs `observe → update KG → query KG → plan → act → observe`, and keeps **no message
-history**. Every model call is handed a freshly rendered slice of the graph:
+The agent runs `observe → update KG → query KG → plan → choose → act → observe`, and keeps **no
+message history**. Every model call is handed a freshly rendered slice of the graph:
 
 ```python
 kg.context_for("Experiment_42", hops=2)
@@ -51,7 +51,7 @@ you can always ask *why* the agent believes something.
 plan = plan_for(kg, Goal("Hypothesis_A", "validate Hypothesis_A"))
 print(plan.render())
 # goal: validate Hypothesis_A
-#   stage 0: secure_lab_access(Lab_D)
+#   stage 0: load_dataset(Dataset_B), secure_lab_access(Lab_D)
 #   stage 1: acquire_instrument(Instrument_C)
 #   stage 2: run_measurement(Measurement_B)
 #   stage 3: evaluate_hypothesis(Hypothesis_A)
@@ -61,6 +61,27 @@ Already-satisfied subtrees are pruned, cycles raise `CyclicDependencyError`, ind
 grouped into stages, and leaves with no known action are reported in `plan.blocked`. When a chain
 dead-ends the agent asks the model for candidate sub-dependencies — but those proposals go through
 verification before they touch the graph. **The model proposes; the graph constrains.**
+
+That applies to ordering too. `plan.ready` is the actionable frontier (stage 0, minus blocked
+leaves). Whenever two or more steps are ready the agent asks the model which goes first
+(`choose_action`), and `plan.find` accepts the reply only if it names a ready step — an off-plan
+answer falls back to the planner's order. With `KGAgent(..., execute="stage")` each turn acts on
+the whole frontier, then replans:
+
+```
+goal: validate Hypothesis_A
+  stage 0: load_dataset(Dataset_B), secure_lab_access(Lab_D)
+  stage 1: acquire_instrument(Instrument_C)
+  ...
+  turn 1: frontier of 2
+  1. secure_lab_access(Lab_D) -> ok (model's choice)
+  2. load_dataset(Dataset_B) -> ok
+  turn 2: frontier of 1
+  3. acquire_instrument(Instrument_C) -> failed
+```
+
+A failed step is marked `status=failed` on the graph and falls into the next turn's frontier; a
+turn spent unblocking a leaf is rendered as `turn N: blocked on X; asked the model, ...`.
 
 ## 3. The graph constrains hallucination
 
@@ -82,6 +103,21 @@ A contradicted verdict carries the conflicting edges as `evidence`, so the agent
 conflict instead of silently dropping the claim. `IngestPolicy` then decides what is written:
 known claims are no-ops, unknown ones land provisionally at reduced confidence with
 `source="llm"`, and contradicted or ill-formed ones never enter the world model.
+
+The agent then **resolves** each contradiction against provenance. The default rule: if every
+conflicting edge is itself a provisional model claim (`source="llm"`) with lower confidence than
+the new one, the old edges are retracted (`reason="superseded by observation"`, inverse twins
+included) and the claim is written; otherwise the graph's side is kept and the reason is reported.
+`@agent.resolver` overrides that with your own `(agent, verdict) -> "keep" | "replace" | None`.
+`run.resolutions` lists every decision and `run.unresolved` the contradictions that were kept:
+
+```
+5. run_measurement(Measurement_B) -> ok
+     ingest: 0 known, 2 provisional, 2 rejected (2 contradicted)
+     resolved: replaced: Protein_G inhibits Protein_H -- every conflicting edge is provisional ('llm') ...
+contradictions needing resolution:
+  - [contradicted] Protein_C inhibits Protein_D -- ... (kept: Protein_C --activates--> Protein_D comes from 'observation', ...)
+```
 
 This is only possible because relation *semantics* are declared — a bare triple store cannot know
 that `inhibits` conflicts with `activates`:
@@ -128,8 +164,27 @@ goal: upgrade kg-agent's dependency tree and resync
 Stages follow dependency depth. No action satisfies a `Runtime`, so `python` is reported blocked
 rather than guessed at; the agent asks the model, and of two proposals the graph writes
 `python satisfied_by cpython-3.13` provisionally and refuses `python depends_on kg-agent` (a
-`Project` is not a `Package`). A `pluggy` download that times out is retried by reading `status`
-off the graph, not a counter in the process.
+`Project` is not a `Package`).
+
+The agent runs in `stage` mode, so turn 1 acts on all five ready packages. Asked which goes first,
+the model front-loads the slow `pluggy` download; its timeout marks the node `failed` and it falls
+into turn 2's frontier, retried by reading `status` off the graph, not a counter in the process:
+
+```
+  turn 1: frontier of 5
+  1. upgrade_package(pluggy) -> failed (model's choice)
+  2. upgrade_package(colorama) -> ok
+  ...
+  turn 2: frontier of 1
+  6. upgrade_package(pluggy) -> ok
+  turn 3: frontier of 1
+  7. upgrade_package(pytest) -> ok
+  turn 4: blocked on python; asked the model, which added 1 edge
+  turn 5: frontier of 1
+  8. resync_project(kg-agent) -> ok
+  contradictions needing resolution:
+    - [contradicted] packaging depends_on pytest -- ... (kept: ... comes from 'inference', not a provisional model claim)
+```
 
 The upgrade step for `pytest` observes a fluent, wrong changelog summary. Each error is caught by a
 different declared semantic:
@@ -140,8 +195,9 @@ different declared semantic:
 | `packaging depends_on pytest` | `depends_on` is incompatible with its own inverse | `contradicted` — the graph holds `packaging required_by pytest` |
 | `pytest pinned_to pytest==8.4.1` | `pinned_to` is functional | `ill_formed` under the strict policy; `contradicted` by the `9.1.1` pin even if new entities were allowed |
 
-Section 4 stops the run after four steps with `pluggy` marked failed, saves the graph, loads it
-into a brand-new agent with no transcript and no retry counters, and finishes the upgrade.
+Section 4 stops the run mid-stage after four acted steps with `pluggy` marked failed, saves the
+graph, loads it into a brand-new agent with no transcript and no retry counters, and finishes the
+upgrade.
 
 ## Connecting a model (OpenRouter)
 
@@ -185,15 +241,18 @@ Replies are parsed leniently — fenced JSON, a bare list, `{"s","p","o"}` keys,
 exception. Usage is tallied on `llm.usage`.
 
 The model has no write access. Everything it proposes returns as `Claim` objects and still has to
-survive `verify` and the ingest policy, so a live run behaves exactly like the scripted one:
+survive `verify` and the ingest policy, and its `choose_action` reply (the prompt lists the ready
+steps as `action(node)` entries) is only honoured when it names one of them — so a live run behaves
+exactly like the scripted one:
 
 ```
-4. run_measurement(Measurement_B) -> ok
+5. run_measurement(Measurement_B) -> ok
      observed: measurement complete: Measurement_B produced Result_R12, and Result_R12
-               supports Hypothesis_A. Separately, Protein_C inhibits Protein_D.
-     ingest: 0 known, 2 provisional, 1 rejected (1 contradicted)
+               supports Hypothesis_A. Separately, Protein_C inhibits Protein_D, ...
+     ingest: 0 known, 2 provisional, 2 rejected (2 contradicted)
+     resolved: replaced: Protein_G inhibits Protein_H -- every conflicting edge is provisional ('llm') ...
   contradictions needing resolution:
-    - [contradicted] Protein_C inhibits Protein_D -- graph asserts Protein_C --activates--> Protein_D
+    - [contradicted] Protein_C inhibits Protein_D -- graph asserts Protein_C --activates--> Protein_D (kept: ...)
 ```
 
 ## Wiring a different provider
@@ -204,7 +263,7 @@ Implement three methods — no base class, no dependency:
 class MyLLM:
     def propose_claims(self, observation: str, context: str) -> list[Claim]: ...
     def propose_dependencies(self, node: str, context: str) -> list[Claim]: ...
-    def choose_action(self, plan, context: str) -> str | None: ...
+    def choose_action(self, plan, context: str) -> str | None: ...   # a bare action or "action(node)" from plan.ready
 ```
 
 `ScriptedLLM` is the deterministic stand-in used by the demo and the tests.
@@ -219,5 +278,5 @@ class MyLLM:
 | `kg_agent/planner.py` | backward chaining, cycle detection, stages |
 | `kg_agent/llm.py` | the model boundary (`LLM` Protocol, `ScriptedLLM`) |
 | `kg_agent/openrouter.py` | `OpenRouterLLM` — live models over stdlib `urllib` |
-| `kg_agent/agent.py` | the loop |
+| `kg_agent/agent.py` | the loop: model choice, stage execution, contradiction resolution |
 | `kg_agent/demo.py` | runnable walkthrough |

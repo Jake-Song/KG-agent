@@ -37,18 +37,22 @@ def build_world() -> KnowledgeGraph:
     kg.assert_edge("Hypothesis_H3", "conflicts_with", "Paper_P9", strict=True)
     kg.assert_edge("Hypothesis_H3", "depends_on", "Assumption_A2", strict=True)
 
-    # The dependency chain the planner will walk.
+    # The dependency chain the planner will walk.  Dataset_B sits beside the
+    # lab at stage 0, so the frontier has two ready steps for the model to order.
     kg.add_node("Hypothesis_A", "Hypothesis")
     kg.add_node("Measurement_B", "Measurement")
     kg.add_node("Instrument_C", "Instrument")
     kg.add_node("Lab_D", "Lab")
+    kg.add_node("Dataset_B", "Dataset")
     kg.assert_edge("Hypothesis_A", "requires", "Measurement_B", strict=True)
+    kg.assert_edge("Hypothesis_A", "requires", "Dataset_B", strict=True)
     kg.assert_edge("Measurement_B", "requires", "Instrument_C", strict=True)
     kg.assert_edge("Instrument_C", "located_at", "Lab_D", strict=True)
     kg.assert_edge("Instrument_C", "requires", "Lab_D", strict=True)  # access is a prerequisite
 
     # Molecular facts for the claim-checking section.
-    for protein in ("Protein_A", "Protein_B", "Protein_C", "Protein_D", "Protein_E", "Protein_F"):
+    for protein in ("Protein_A", "Protein_B", "Protein_C", "Protein_D", "Protein_E", "Protein_F",
+                    "Protein_G", "Protein_H"):
         kg.add_node(protein, "Protein")
     kg.assert_edge("Protein_A", "inhibits", "Protein_B", strict=True)
     kg.assert_edge("Protein_C", "activates", "Protein_D", strict=True)
@@ -73,24 +77,37 @@ def demo_world_model(kg: KnowledgeGraph) -> None:
 def build_agent(kg: KnowledgeGraph, llm=None) -> KGAgent:
     llm = llm or ScriptedLLM(
         claims_by_observation={
-            "lab access granted": claims("Lab_D satisfied_by Access_Badge_17"),
+            "lab access granted": claims("Lab_D satisfied_by Access_Badge_17")
+            # A low-confidence aside from the lab notes: written provisionally.
+            + [Claim.parse("Protein_G activates Protein_H", confidence=0.4)],
             "instrument booked": claims("Instrument_C located_at Lab_D"),
             "measurement complete": claims(
                 "Measurement_B produced Result_R12",
                 "Result_R12 supports Hypothesis_A",
                 # A hallucination: the graph already says Protein_C activates Protein_D.
                 "Protein_C inhibits Protein_D",
-            ),
+            )
+            # Contradicts the provisional aside above, with much higher confidence.
+            + [Claim.parse("Protein_G inhibits Protein_H", confidence=0.9)],
             "hypothesis evaluated": claims("Result_R12 supports Hypothesis_A"),
         },
         dependencies_by_node={},
+        # Asked which ready step goes first, the model front-loads lab access (the
+        # longest lead time); the planner alone would have loaded Dataset_B first.
+        action=lambda plan, context: "secure_lab_access(Lab_D)",
     )
-    agent = KGAgent(kg, llm, policy=IngestPolicy(accept_unknown=True, unknown_confidence=0.6))
+    agent = KGAgent(kg, llm, execute="stage",
+                    policy=IngestPolicy(accept_unknown=True, unknown_confidence=0.6))
     attempts = {"Instrument_C": 0}
 
     @agent.action("secure_lab_access")
     def secure_lab_access(agent: KGAgent, step) -> str:
-        return "lab access granted: Lab_D satisfied_by Access_Badge_17"
+        return ("lab access granted: Lab_D satisfied_by Access_Badge_17. "
+                "A note on the bench suggests Protein_G activates Protein_H.")
+
+    @agent.action("load_dataset")
+    def load_dataset(agent: KGAgent, step) -> str:
+        return f"dataset loaded: {step.node}"
 
     @agent.action("acquire_instrument")
     def acquire_instrument(agent: KGAgent, step) -> ActionResult:
@@ -105,7 +122,8 @@ def build_agent(kg: KnowledgeGraph, llm=None) -> KGAgent:
     def run_measurement(agent: KGAgent, step) -> str:
         return ("measurement complete: Measurement_B produced Result_R12, "
                 "and Result_R12 supports Hypothesis_A. "
-                "Separately, Protein_C inhibits Protein_D.")
+                "Separately, Protein_C inhibits Protein_D, and the assay shows "
+                "Protein_G inhibits Protein_H.")
 
     @agent.action("evaluate_hypothesis")
     def evaluate_hypothesis(agent: KGAgent, step) -> str:
@@ -121,11 +139,21 @@ def demo_planning(kg: KnowledgeGraph, llm=None) -> None:
     print(plan_for(kg, goal).render())
 
     agent = build_agent(kg, llm)
-    print(f"\nclaim extraction by: {type(agent.llm).__name__}"
+    print(f"\nclaim extraction and step choice by: {type(agent.llm).__name__}"
           + (f" ({agent.llm.model})" if hasattr(agent.llm, "model") else ""))
-    print("\n--- running the loop: observe -> update -> query -> plan -> act -> observe ---")
+    print("Each turn acts on the whole ready frontier (execute='stage'); with two steps ready")
+    print("the model is asked which goes first, and only a step on the plan is accepted.")
+    print("\n--- running the loop: observe -> update -> query -> plan -> choose -> act -> observe ---")
     run = agent.run(goal)
     print(run.render())
+
+    print("\ncontradictions were resolved against provenance, not dropped:")
+    for resolution in run.resolutions:
+        print(f"  {resolution.decision:<8} {resolution.verdict.claim} -- {resolution.reason}")
+    print(f"  Protein_G activates Protein_H live: {kg.has_edge('Protein_G', 'activates', 'Protein_H')}; "
+          f"inhibits: {kg.has_edge('Protein_G', 'inhibits', 'Protein_H')}; "
+          f"retracted edges in history: {len([e for e in kg.history if e.retracted_at])}")
+    print(f"  Protein_C activates Protein_D still live: {kg.has_edge('Protein_C', 'activates', 'Protein_D')}")
 
     print("\nreplan after the run:")
     print(plan_for(kg, goal).render())

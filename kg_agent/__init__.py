@@ -10,7 +10,7 @@ Three capabilities over one graph:
    :class:`IngestPolicy` decides what enters the graph.
 """
 
-from .agent import ActionResult, KGAgent, LoopRecord, RunResult
+from .agent import ActionResult, KGAgent, LoopRecord, Resolution, RunResult
 from .graph import AssertResult, ConstraintViolation, Edge, KnowledgeGraph, Node
 from .llm import LLM, ScriptedLLM, claims
 from .planner import (DEFAULT_ACTIONS, CyclicDependencyError, Goal, Plan, PlanStep,
@@ -23,7 +23,7 @@ __all__ = [
     "ActionResult", "AssertResult", "Claim", "ConstraintViolation", "CyclicDependencyError",
     "DEFAULT_ACTIONS", "DEFAULT_MODEL", "Edge", "Goal", "IngestPolicy", "IngestReport", "KGAgent",
     "KnowledgeGraph", "LLM", "LoopRecord", "Node", "Ontology", "OpenRouterError",
-    "OpenRouterLLM", "Plan", "PlanStep",
+    "OpenRouterLLM", "Plan", "PlanStep", "Resolution",
     "RelationSpec", "RunResult", "ScriptedLLM", "Status", "Usage", "Verdict", "claims",
     "default_ontology", "ingest", "plan_for", "verify", "verify_all",
 ]

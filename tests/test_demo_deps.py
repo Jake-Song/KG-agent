@@ -138,3 +138,20 @@ def test_main_runs_offline(capsys):
                    "3. The graph constrains", "4. The upgrade survives a restart"):
         assert banner in out
     assert "completed=True" in out
+
+
+def test_stage_mode_reorders_the_frontier_by_the_models_choice():
+    kg = load_lock(REPO_LOCK)
+    run = build_agent(kg).run(goal_for(kg))
+    assert run.completed
+    assert run.records[0].step.node == "pluggy" and run.records[0].chosen_by == "model"
+    assert {r.turn for r in run.records[:5]} == {1}
+    assert [r.step.node for r in run.records[1:5]] == ["colorama", "iniconfig", "packaging",
+                                                        "pygments"]
+    assert run.records[5].step.node == "pluggy" and run.records[5].turn == 2
+    acted = [r for r in run.records if r.step]
+    assert [r.iteration for r in acted] == list(range(1, len(acted) + 1))
+    assert [r.note for r in run.records if not r.step] == [
+        "blocked on python; asked the model, which added 1 edge"]
+    assert [str(v.claim) for v in run.unresolved] == ["packaging depends_on pytest"]
+    assert "(model's choice)" in run.render()

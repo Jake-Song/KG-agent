@@ -106,3 +106,36 @@ def test_render_is_readable():
     text = plan_for(chain(), Goal("Hypothesis_A", "validate Hypothesis_A")).render()
     assert "goal: validate Hypothesis_A" in text
     assert "stage 0: secure_lab_access(Lab_D)" in text
+
+
+def branching() -> KnowledgeGraph:
+    kg = chain()
+    kg.add_node("Dataset_A", "Dataset")
+    kg.add_node("Widget_X", "Widget")
+    kg.assert_edge("Hypothesis_A", "requires", "Dataset_A")
+    kg.assert_edge("Instrument_C", "requires", "Widget_X")
+    return kg
+
+
+def test_ready_is_the_unblocked_stage_zero():
+    plan = plan_for(branching(), "Hypothesis_A")
+    assert [s.node for s in plan.stages[0]] == ["Dataset_A", "Lab_D", "Widget_X"]
+    assert [s.node for s in plan.ready] == ["Dataset_A", "Lab_D"]
+
+    kg = branching()
+    kg.update_node("Dataset_A", status="complete")
+    kg.update_node("Lab_D", status="complete")
+    plan = plan_for(kg, "Hypothesis_A")
+    assert plan.ready == [] and plan.blocked == ["Widget_X"]
+    assert plan_for(chain(), "Hypothesis_A").ready[0].node == "Lab_D"
+
+
+def test_find_resolves_exact_form_then_bare_action_and_only_ready_steps():
+    plan = plan_for(branching(), "Hypothesis_A")
+    assert plan.find("secure_lab_access(Lab_D)").node == "Lab_D"
+    assert plan.find("load_dataset").node == "Dataset_A"
+    assert plan.find("  load_dataset  ").node == "Dataset_A"
+    assert plan.find("evaluate_hypothesis") is None        # stage 2: dependencies unmet
+    assert plan.find("resolve(Widget_X)") is None          # blocked
+    assert plan.find("launch_rocket") is None
+    assert plan.find("") is None and plan.find(None) is None
