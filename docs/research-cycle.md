@@ -62,6 +62,7 @@ benchmark, seed, budget, or hypothesis space.
 uv run python -m kg_agent.research init --dir research-runs/demo --budget 3
 uv run python -m kg_agent.research run --dir research-runs/demo
 uv run python -m kg_agent.research status --dir research-runs/demo
+uv run python -m kg_agent.research generate --dir research-runs/demo
 
 cat > research-runs/demo/proposal.json <<'JSON'
 {
@@ -149,3 +150,9 @@ finalized session, rerun `finalize` to refresh the report without rerunning rese
 
 The Python `ResearchSession` API is also usable in tests and applications. Its
 caller must hold `session_lock` for concurrent access; the CLI does this itself.
+
+`generate` previews one deterministic proposal anchored on the current lowest
+validation-MSE trial. It considers only unseen degree/penalty configurations,
+prefers nearby one-factor changes, and does not evaluate data, consume budget,
+queue a trial, or write session state. The returned proposal can be submitted
+with `propose` after review.

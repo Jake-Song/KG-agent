@@ -163,6 +163,7 @@ Inspect state → propose hypothesis → validate contracts → fit model
 uv run python -m kg_agent.research init --dir research-runs/my-study --budget 5
 uv run python -m kg_agent.research run --dir research-runs/my-study
 uv run python -m kg_agent.research status --dir research-runs/my-study
+uv run python -m kg_agent.research generate --dir research-runs/my-study
 ```
 
 The first `run` executes the linear baseline. For an existing directory, start with
@@ -180,6 +181,11 @@ The first `run` executes the linear baseline. For an existing directory, start w
 [research instructions](docs/research-cycle.md).
 
 ### Submit an experiment
+
+After the baseline or any completed trial, `generate` previews the next
+deterministic hypothesis chosen from the current validation winner. It does not
+consume budget or modify the session. Review the returned `proposal`, then pass
+it to `propose` as usual.
 
 For example, after measuring the linear baseline, test whether adding curvature
 reduces validation error:
@@ -209,6 +215,7 @@ at initialization; only validation MSE selects the winner.
 | --- | --- |
 | `init` | Freeze settings, create the graph, and queue the baseline |
 | `status` | Show all trials, contracts, remaining budget, and permitted next commands |
+| `generate` | Preview one deterministic, evidence-guided proposal without changing state |
 | `propose` | Validate a unique configuration and record its hypothesis and comparison target |
 | `run` | Fit and evaluate the pending trial, validate evidence, and save its conclusion |
 | `finalize` | Select the validation winner, evaluate its saved model on test data, and freeze the study |

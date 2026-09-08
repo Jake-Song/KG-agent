@@ -6,6 +6,7 @@ These describe the workflow and current evidence; they are not execution logs.
 COMMAND_DESCRIPTIONS = {
     "init": "Freeze the seed and trial budget, create the study graph, and queue the linear baseline.",
     "status": "Read saved evidence and check the ontology rules to identify permitted next commands.",
+    "generate": "Generate one deterministic, evidence-guided proposal without changing session state or consuming budget.",
     "propose": "Validate the configuration and study rules, freeze the comparison target, and queue the hypothesis. An identical ID returns its existing trial.",
     "run": "Use graph dependencies to fit the pending model before evaluating it, check evidence contracts, and save the measured conclusion.",
     "finalize": "Select the lowest validation MSE, evaluate its saved model on the test split, and freeze the study. If already finalized, return saved scores without reevaluation.",

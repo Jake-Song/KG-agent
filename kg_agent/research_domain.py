@@ -86,7 +86,7 @@ class ResearchOntology(Ontology):
             raise ResearchError("baseline_required", "A successful baseline is required")
         if pending:
             raise ResearchError("pending_trial", "Run the pending trial first")
-        if command == "propose" and len(trials) >= state["budget"]:
+        if command in ("generate", "propose") and len(trials) >= state["budget"]:
             raise ResearchError("budget_exhausted", "The trial budget is exhausted")
 
     def check_action(self, action, node):

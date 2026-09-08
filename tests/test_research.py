@@ -84,6 +84,48 @@ def test_proposal_idempotency_and_pending_guards(tmp_path):
     assert cli(tmp_path, "init", code=2)["code"] == "session_exists"
 
 
+def test_generate_previews_deterministic_next_hypothesis_without_mutation(tmp_path):
+    cli(tmp_path, "init", "--budget", "3")
+    assert cli(tmp_path, "generate", code=2)["code"] == "baseline_required"
+    cli(tmp_path, "run")
+    before = (tmp_path / "state.json").read_bytes()
+    first = cli(tmp_path, "generate")
+    second = cli(tmp_path, "generate")
+    assert first == second
+    assert first["based_on_trial_id"] == "baseline"
+    assert first["proposal"]["degree"] == 2
+    assert first["proposal"]["penalty"] == 0
+    assert first["state"]["next_commands"] == ["status", "generate", "propose", "finalize"]
+    assert (tmp_path / "state.json").read_bytes() == before
+
+
+def test_generate_follows_validation_winner_and_excludes_failed_configs(tmp_path):
+    session = initialized(tmp_path, budget=5)
+    session.propose(proposal())
+    session.run()
+    generated = session.generate_hypothesis()
+    assert generated["based_on_trial_id"] == "quadratic"
+    assert generated["proposal"]["degree"] == 3
+    assert generated["proposal"]["penalty"] == 0
+    session.propose(generated["proposal"])
+    session.run()
+    next_proposal = session.generate_hypothesis()["proposal"]
+    assert (next_proposal["degree"], next_proposal["penalty"]) == (4, 0)
+    assert "current validation winner" in next_proposal["rationale"]
+
+
+def test_generate_handles_id_collision_and_exhaustion(tmp_path):
+    session = initialized(tmp_path, budget=3)
+    session.propose({**proposal(), "id": "degree-3-penalty-0p001", "penalty": 0.001})
+    session.run()
+    generated = session.generate_hypothesis()["proposal"]
+    assert generated["id"] == "degree-3-penalty-0p001-2"
+    session.propose(generated)
+    session.run()
+    assert session.status()["next_commands"] == ["status", "finalize"]
+    assert cli(tmp_path, "generate", code=2)["code"] == "budget_exhausted"
+
+
 @pytest.mark.parametrize("change", [{"degree": True}, {"degree": 6}, {"penalty": float("nan")},
                                     {"penalty": -1}, {"id": "../outside"}, {"rationale": " "},
                                     {"validation_mse": 0}, {"penalty": True}])

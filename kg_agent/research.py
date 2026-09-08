@@ -18,6 +18,7 @@ from .graph import KnowledgeGraph
 from .planner import plan_for
 from .research_domain import ResearchError, ResearchOntology
 from .research_explain import COMMAND_DESCRIPTIONS, explained_trial, next_step_description, trial_steps
+from .research_hypothesis import generate_hypothesis
 from . import research_experiment as experiment
 
 FORMAT_VERSION = 1
@@ -134,6 +135,14 @@ class ResearchSession:
         self.save()
         return trial
 
+    def generate_hypothesis(self):
+        """Return a deterministic next proposal without mutating this session."""
+        self.ontology.check_command("generate", self.state)
+        best = self.best()
+        proposal = generate_hypothesis(self.state, self.ontology)
+        self.ontology.validate_proposal(proposal)
+        return {"proposal": proposal, "based_on_trial_id": best["proposal"]["id"]}
+
     def run(self):
         self.ontology.check_command("run", self.state)
         trial = next(t for t in self.state["trials"] if t["status"] == "pending")
@@ -193,7 +202,7 @@ class ResearchSession:
             allowed = ["status", "finalize"]
         else:
             allowed = ["status"]
-            for command in ("run", "propose", "finalize"):
+            for command in ("run", "generate", "propose", "finalize"):
                 try:
                     self.ontology.check_command(command, self.state)
                 except ResearchError:
@@ -263,7 +272,7 @@ def main(argv=None):
     try:
         parser = Parser(description=__doc__)
         subs = parser.add_subparsers(dest="command", required=True)
-        for command in ("init", "status", "propose", "run", "finalize"):
+        for command in ("init", "status", "generate", "propose", "run", "finalize"):
             sub = subs.add_parser(command)
             sub.add_argument("--dir", required=True, type=Path)
             if command == "init":
@@ -284,6 +293,8 @@ def main(argv=None):
                 session = ResearchSession.load(args.dir)
                 if args.command == "status":
                     result = session.status()
+                elif args.command == "generate":
+                    result = {**session.generate_hypothesis(), "state": session.status()}
                 elif args.command == "propose":
                     trial = session.propose(json.loads(args.file.read_text()))
                     result = {"trial": explained_trial(trial, session.ontology), "state": session.status()}
