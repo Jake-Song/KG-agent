@@ -2,16 +2,19 @@
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/KG-agent/blob/main/notebooks/quickstart.ipynb)
 
-A knowledge graph used as an agent's **world model**, **planner state**, and **constraint on
-hallucination** — rather than as a store to answer questions from.
+**Ontology defines; agent executes.** A knowledge graph holds the agent's world model
+and planner state. Declared semantics constrain proposed facts; the research workflow
+also checks action contracts before recording successful execution.
 
-Zero runtime dependencies (stdlib only). The model is a `Protocol`, not an SDK.
+Python 3.13+; zero runtime dependencies (stdlib only). The model boundary is a `Protocol`.
+
+Use the [automated research cycle](#automated-research-with-codex-or-claude-code)
+with a terminal-capable coding agent, or run the core graph demos:
 
 ```bash
 uv sync
 uv run python -m kg_agent.demo        # walks through all three capabilities
-uv run python -m kg_agent.demo_deps   # ...over a real uv.lock as the world model
-uv run python -m kg_agent.demo_study  # ...over a real research repository
+uv run python -m kg_agent.demo_replan # demonstrates replanning
 uv run python -m kg_agent.demo --live   # ...using a real model via OpenRouter
 uv run pytest -q
 ```
@@ -127,140 +130,154 @@ RelationSpec("located_at", functional=True, range="Lab")   # rebinds instead of 
 RelationSpec("requires", transitive=True, dependency=True) # planner traverses this
 ```
 
-`default_ontology()` ships a scientific vocabulary; build your own `Ontology` for another domain
-(`lock_ontology()` in `kg_agent/demo_deps.py` and `study_ontology()` in
-`kg_agent/demo_study.py` are two, each written from scratch in ~30 lines).
+`default_ontology()` ships a scientific vocabulary. Build your own `Ontology` for
+another domain; [ResearchOntology](kg_agent/research_domain.py) adds the typed
+relations and executable contracts used by the research cycle below.
 
-## A practical demo: upgrading a real dependency tree
+## Automated research with Codex or Claude Code
 
-Nothing in `kg_agent.demo_deps` is typed in by hand. The world model is parsed from a `uv.lock`
-— this repo's own by default, or any uv project's — and the agent plans an upgrade over the real
-tree, retries off the graph, refuses what the model gets wrong about the tree, and survives a
-restart.
+Run actual CPU experiments through a persistent CLI. The coding agent reads current
+evidence and proposes a bounded configuration; the project validates it, executes
+the experiment, and records measured results. The CLI does not launch a coding agent
+or require its own model-provider API key.
+
+```text
+Inspect state → propose hypothesis → validate contracts → fit model
+      ↑                                                   ↓
+      └──────── choose next experiment ← evaluate validation MSE
+                                             ↓
+                        finalize validation winner → evaluate test once
+```
+
+| Component | Responsibility |
+| --- | --- |
+| Ontology and contracts | Allowed configurations, typed relations, prerequisites, required evidence |
+| Knowledge graph | Hypotheses, experiments, models, evaluations, dependencies, and provenance |
+| Planner | Order fitting before evaluation using graph dependencies |
+| Coding agent | Explain a hypothesis, submit its configuration, invoke permitted commands |
+| Fixed evaluator | Fit coefficients, compute metrics, and determine the measured conclusion |
+
+### Start or resume a session
 
 ```bash
-uv run python -m kg_agent.demo_deps
-uv run python -m kg_agent.demo_deps --lock /path/to/other/uv.lock
+uv run python -m kg_agent.research init --dir research-runs/my-study --budget 5
+uv run python -m kg_agent.research run --dir research-runs/my-study
+uv run python -m kg_agent.research status --dir research-runs/my-study
 ```
 
-| in the lockfile | in the graph |
-| --- | --- |
-| `[[package]]` | a `Package` node (or `Project` for the virtual root), `status=locked` |
-| `version = "9.1.1"` | `pytest --pinned_to--> pytest==9.1.1` (`pinned_to` is functional) |
-| `dependencies = [{ name = "packaging" }]` | `pytest --depends_on--> packaging` (transitive; inverse `required_by` materialised) |
-| `marker = "sys_platform == 'win32'"` | a `marker` attribute on the dependency |
-| `requires-python` + `.python-version` | a `Runtime` node the project `runs_on`, and an `Interpreter` that can satisfy it |
+The first `run` executes the linear baseline. For an existing directory, start with
+`status` instead of `init`. Ask your coding agent:
 
-```
-goal: upgrade kg-agent's dependency tree and resync
-  stage 0: upgrade_package(colorama), upgrade_package(iniconfig), upgrade_package(packaging),
-           upgrade_package(pluggy), upgrade_package(pygments), resolve(python) [blocked: no known action]
-  stage 1: upgrade_package(pytest)
-  stage 2: resync_project(kg-agent)
-  blocked on: python
-```
+> Read docs/research-cycle.md and conduct a research session in
+> research-runs/my-study with a budget of five trials. Use the project CLI for all
+> proposals, experiments, and evaluations. Start with the baseline; choose each
+> subsequent hypothesis deliberately from accumulated validation evidence. Continue
+> until the budget is used or no useful permitted hypothesis remains, then finalize
+> and summarize the evidence and limitations. If the session exists, inspect its
+> status and resume it.
 
-Stages follow dependency depth. No action satisfies a `Runtime`, so `python` is reported blocked
-rather than guessed at; the agent asks the model, and of two proposals the graph writes
-`python satisfied_by cpython-3.13` provisionally and refuses `python depends_on kg-agent` (a
-`Project` is not a `Package`).
+[AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md) point to the shared
+[research instructions](docs/research-cycle.md).
 
-The agent runs in `stage` mode, so turn 1 acts on all five ready packages. Asked which goes first,
-the model front-loads the slow `pluggy` download; its timeout marks the node `failed` and it falls
-into turn 2's frontier, retried by reading `status` off the graph, not a counter in the process:
+### Submit an experiment
 
-```
-  turn 1: frontier of 5
-  1. upgrade_package(pluggy) -> failed (model's choice)
-  2. upgrade_package(colorama) -> ok
-  ...
-  turn 2: frontier of 1
-  6. upgrade_package(pluggy) -> ok
-  turn 3: frontier of 1
-  7. upgrade_package(pytest) -> ok
-  turn 4: blocked on python; asked the model, which added 1 edge
-  turn 5: frontier of 1
-  8. resync_project(kg-agent) -> ok
-  contradictions needing resolution:
-    - [contradicted] packaging depends_on pytest -- ... (kept: ... comes from 'inference', not a provisional model claim)
-```
-
-The upgrade step for `pytest` observes a fluent, wrong changelog summary. Each error is caught by a
-different declared semantic:
-
-| the claim | the rule | verdict |
-| --- | --- | --- |
-| `pytest depends_on tomli` | the policy refuses entities the lock never resolved | `ill_formed` — unknown entity |
-| `packaging depends_on pytest` | `depends_on` is incompatible with its own inverse | `contradicted` — the graph holds `packaging required_by pytest` |
-| `pytest pinned_to pytest==8.4.1` | `pinned_to` is functional | `ill_formed` under the strict policy; `contradicted` by the `9.1.1` pin even if new entities were allowed |
-
-Section 4 stops the run mid-stage after four acted steps with `pluggy` marked failed, saves the
-graph, loads it into a brand-new agent with no transcript and no retry counters, and finishes the
-upgrade.
-
-## A second one: a research repository as the world model
-
-`kg_agent.demo_study` parses a real project — [ai4sci-molecule](https://github.com/Jake-Song/ai4sci-molecule),
-six weeks of molecular machine learning on ESOL — out of its `pyproject.toml`, its README, its
-`.gitignore` and the tables under `results/`. A verbatim snapshot of the small files ships in
-`kg_agent/data/ai4sci_molecule/`, so it runs anywhere; `--repo` parses a checkout instead.
+For example, after measuring the linear baseline, test whether adding curvature
+reduces validation error:
 
 ```bash
-uv run python -m kg_agent.demo_study
-uv run python -m kg_agent.demo_study --repo /path/to/ai4sci-molecule
+cat > research-runs/my-study/proposal.json <<'JSON'
+{
+  "id": "quadratic",
+  "hypothesis": "A quadratic term will lower validation MSE by at least 1%",
+  "rationale": "Test whether curvature explains error left by the linear baseline",
+  "degree": 2,
+  "penalty": 0
+}
+JSON
+
+uv run python -m kg_agent.research propose --dir research-runs/my-study --file research-runs/my-study/proposal.json
+uv run python -m kg_agent.research run --dir research-runs/my-study
+uv run python -m kg_agent.research status --dir research-runs/my-study
 ```
 
-| in the repository | in the graph |
+Choose subsequent hypotheses from the returned evidence. The benchmark permits
+polynomial degrees 1–5 and ridge penalties `0`, `0.001`, `0.01`, `0.1`, or `1`.
+The five-trial default budget includes the baseline. Data splits and seed are fixed
+at initialization; only validation MSE selects the winner.
+
+| Command | What it does |
 | --- | --- |
-| the README's `uv run python -m ai4sci_molecule.weekN` lines | a `Study` node the `Project` `requires` |
-| a week's `*_config.json` | `week6 --evaluates--> scaffold_shuffled`, and functional pins like `week6 --uses_architecture--> GIN` |
-| files under `results/weekN/` | `Artifact` nodes the study `produced` |
-| `.gitignore` entries under `results/` | the outputs a fresh clone lacks: `week3 --must_produce--> results/week3/predictions.csv` |
-| `budget_efficiency.csv`, `accuracy.csv` | `outperforms` edges between regime-scoped `Arm` nodes, ordered by error |
-| `summary.json` caveats | `Caveat` nodes the study `limits` itself with |
-| a checkout's `src/…/week*.py` imports | `week4 --derived_from--> week3` |
+| `init` | Freeze settings, create the graph, and queue the baseline |
+| `status` | Show all trials, contracts, remaining budget, and permitted next commands |
+| `propose` | Validate a unique configuration and record its hypothesis and comparison target |
+| `run` | Fit and evaluate the pending trial, validate evidence, and save its conclusion |
+| `finalize` | Select the validation winner, evaluate its saved model on test data, and freeze the study |
 
-Arms are scoped by regime (`out_of_scaffold:diversity`) for the same reason versions are scoped in
-the lockfile demo: `random` beats `diversity` in domain and loses to it out of scaffold, so
-unscoped nodes would make the graph contradict itself. Only rank-adjacent pairs are asserted —
-`outperforms` is transitive, so the rest of the order is derived rather than stored.
+Every command requires `--dir`. Operational output is JSON with `ok`, `description`,
+and either `result` or `error`. Exit codes are 0 for success, 2 for invalid requests,
+and 3 for execution/storage/lock failures. Commands never prompt interactively.
 
+### Inspect every step
+
+Each trial returned by `status`, `propose`, or `run` includes ordered explanations:
+
+1. **Hypothesis:** what the agent predicts and why.
+2. **Contract:** allowed configuration and study rules.
+3. **Plan:** why fitting must precede evaluation.
+4. **Fit:** training setup, evidence requirements, and saved coefficients.
+5. **Evaluate:** validation procedure and measured MSE.
+6. **Compare:** reference trial, relative improvement, and whether the 1% criterion was met.
+7. **Persist:** saved status and budget usage.
+
+Descriptions distinguish pending, completed, failed, and skipped actions. They are
+derived from saved evidence, not timestamped execution logs. To read the JSON more easily:
+
+```bash
+uv run python -m kg_agent.research status --dir research-runs/my-study | uv run python -m json.tool
 ```
-goal: rebuild what a fresh clone of ai4sci-molecule is missing
-  stage 0: resolve(esol) [blocked: no known action]
-  stage 1: materialise_split(random), materialise_split(scaffold), materialise_split(scaffold_shuffled)
-  stage 2: run_study(week3), run_study(week4), run_study(week5), run_study(week6)
-  stage 3: reproduce(ai4sci-molecule)
-  blocked on: esol
+
+### Finalize and inspect the report
+
+When the budget is exhausted, or no useful permitted hypothesis remains:
+
+```bash
+uv run python -m kg_agent.research finalize --dir research-runs/my-study
 ```
 
-`data/` is gitignored, so nothing the agent can do satisfies a `Dataset`: turn 1 has no ready step
-at all, and the agent asks the model, which offers `esol satisfied_by data/MoleculeNet` (written
-provisionally) and `esol evaluates random` (refused — `evaluates` needs a `Study` subject). Asked
-which study goes first, the model front-loads `week6`, the sweep that really took 1h37m; it is
-interrupted, marked `failed`, and retried a turn later from the trajectory shards that repository
-commits on purpose.
+The session directory contains `state.json` (authoritative graph and experiment
+records) and `report.md` (readable results with descriptions of every step).
+Local sessions under `research-runs/` are gitignored.
 
-The findings are where the graph earns its keep, because the project's own headline is the
-counterintuitive one: letting the model pick which molecules to measure **never** beat random
-selection, and the only real saving came from `diversity`, out of scaffold.
+Interrupted trials resume under the same ID without consuming another slot.
+Completed trials cannot be rerun. Repeating `finalize` regenerates the report from
+saved scores without reevaluating the test split. To rerun a finalized study, choose
+a new session directory. CLI locking requires a POSIX system such as Linux or macOS.
 
-| the claim | the rule | verdict |
-| --- | --- | --- |
-| `out_of_scaffold:uncertainty outperforms out_of_scaffold:random` | `outperforms` is incompatible with its own inverse | `contradicted` — the table ranks `random` above it |
-| `out_of_scaffold:GIN outperforms out_of_scaffold:MLP` | same | `contradicted` — true in domain, false in the regime it was claimed for |
-| `out_of_scaffold:bald outperforms out_of_scaffold:random` | the policy refuses entities no config declares | `ill_formed` — unknown entity |
-| `week6 uses_architecture GCN` | `uses_architecture` is functional | `contradicted` — the config pins `GIN` |
+### Example: five-trial run
 
-Every contradiction here is *kept*: the conflicting side is a parsed table, not a provisional model
-claim, and the reason names the file it came from. What the model does get to add is the study
-order — nothing in the committed tables states that week 4 reads week 3's predictions, so that
-edge is written provisionally when the run observes it, and is then used to refuse the same
-dependency stated backwards.
+A seed-42 run and a fresh rerun produced these validation results:
 
-Pointing the demo at a real checkout changes the shape rather than the story: the committed
-`splits.json` files make the splits already satisfied, so the dataset never enters the plan, and
-the study order comes from `src/ai4sci_molecule/week*.py` imports instead of from the run.
+| Trial | Degree | Ridge penalty | Validation MSE | Improvement over prior best |
+| --- | ---: | ---: | ---: | ---: |
+| Linear baseline | 1 | 0 | 0.35553404 | — |
+| Quadratic | 2 | 0 | 0.00975547 | 97.256% |
+| Quadratic + mild ridge | 2 | 0.001 | 0.00974331 | 0.125% |
+| Cubic | 3 | 0 | 0.00973230 | 0.113% |
+| Cubic + mild ridge | 3 | 0.001 | **0.00971334** | 0.195% |
+
+The winner's final test MSE was **0.01014440**. Adding the quadratic term met the
+1% improvement criterion; the later gains did not. The lowest-MSE trial still wins
+even when its margin falls below that criterion.
+
+These results demonstrate the mechanics and reproducibility of the cycle on a
+small synthetic benchmark: 80 training, 40 validation, and 40 test observations.
+They do not establish statistical significance or real-world generalization. The
+same-seed rerun is not an independent replication. The CLI enforces its own action
+boundary; it is not a sandbox against an agent that edits the source or saved state.
+
+See [the full guide](docs/research-cycle.md) for persistence, error handling, and
+research-session rules. The existing `KGAgent` / OpenRouter integration below is a
+separate way to operate the core graph loop.
 
 ## Connecting a model (OpenRouter)
 
@@ -275,7 +292,7 @@ uv run python -m kg_agent.demo --live    # the whole demo against a real model
 **`deepseek/deepseek-v4-flash-0731`**; override per call, or with `OPENROUTER_MODEL`.
 
 ```python
-from kg_agent import KGAgent, KnowledgeGraph, OpenRouterLLM, default_ontology
+from kg_agent import Goal, KGAgent, KnowledgeGraph, OpenRouterLLM, default_ontology
 
 kg = KnowledgeGraph(ontology=default_ontology())
 llm = OpenRouterLLM(ontology=kg.ontology)         # ontology -> the allowed-predicate vocabulary
@@ -343,5 +360,9 @@ class MyLLM:
 | `kg_agent/openrouter.py` | `OpenRouterLLM` — live models over stdlib `urllib` |
 | `kg_agent/agent.py` | the loop: model choice, stage execution, contradiction resolution |
 | `kg_agent/demo.py` | runnable walkthrough |
-| `kg_agent/demo_deps.py` | the same three capabilities over a real `uv.lock` |
-| `kg_agent/demo_study.py` | ...and over a real research repository (`kg_agent/data/ai4sci_molecule/`) |
+| `kg_agent/demo_replan.py` | replanning walkthrough |
+| `kg_agent/research.py` | persistent CLI, research execution, and final report |
+| `kg_agent/research_domain.py` | research ontology and executable contracts |
+| `kg_agent/research_experiment.py` | fixed synthetic data, polynomial fitting, and MSE evaluation |
+| `kg_agent/research_explain.py` | evidence-derived step descriptions |
+| `docs/research-cycle.md` | instructions for conducting research with a coding agent |
