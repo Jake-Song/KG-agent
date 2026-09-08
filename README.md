@@ -52,10 +52,11 @@ you can always ask *why* the agent believes something.
 plan = plan_for(kg, Goal("Hypothesis_A", "validate Hypothesis_A"))
 print(plan.render())
 # goal: validate Hypothesis_A
-#   stage 0: load_dataset(Dataset_B), secure_lab_access(Lab_D)
+#   stage 0: secure_lab_access(Lab_D)
 #   stage 1: acquire_instrument(Instrument_C)
-#   stage 2: run_measurement(Measurement_B)
-#   stage 3: evaluate_hypothesis(Hypothesis_A)
+#   stage 2: load_dataset(Dataset_B)
+#   stage 3: run_measurement(Measurement_B)
+#   stage 4: evaluate_hypothesis(Hypothesis_A)
 ```
 
 Already-satisfied subtrees are pruned, cycles raise `CyclicDependencyError`, independent work is
@@ -63,22 +64,18 @@ grouped into stages, and leaves with no known action are reported in `plan.block
 dead-ends the agent asks the model for candidate sub-dependencies — but those proposals go through
 verification before they touch the graph. **The model proposes; the graph constrains.**
 
-That applies to ordering too. `plan.ready` is the actionable frontier (stage 0, minus blocked
-leaves). Whenever two or more steps are ready the agent asks the model which goes first
-(`choose_action`), and `plan.find` accepts the reply only if it names a ready step — an off-plan
-answer falls back to the planner's order. With `KGAgent(..., execute="stage")` each turn acts on
-the whole frontier, then replans:
+The demo follows one dependency chain, so `plan.ready` contains one actionable step
+per turn. The agent acts, updates the graph, and replans:
 
 ```
 goal: validate Hypothesis_A
-  stage 0: load_dataset(Dataset_B), secure_lab_access(Lab_D)
+  stage 0: secure_lab_access(Lab_D)
   stage 1: acquire_instrument(Instrument_C)
   ...
-  turn 1: frontier of 2
-  1. secure_lab_access(Lab_D) -> ok (model's choice)
-  2. load_dataset(Dataset_B) -> ok
+  turn 1: frontier of 1
+  1. secure_lab_access(Lab_D) -> ok
   turn 2: frontier of 1
-  3. acquire_instrument(Instrument_C) -> failed
+  2. acquire_instrument(Instrument_C) -> failed
 ```
 
 A failed step is marked `status=failed` on the graph and falls into the next turn's frontier; a

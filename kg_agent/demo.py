@@ -37,16 +37,15 @@ def build_world() -> KnowledgeGraph:
     kg.assert_edge("Hypothesis_H3", "conflicts_with", "Paper_P9", strict=True)
     kg.assert_edge("Hypothesis_H3", "depends_on", "Assumption_A2", strict=True)
 
-    # The dependency chain the planner will walk.  Dataset_B sits beside the
-    # lab at stage 0, so the frontier has two ready steps for the model to order.
+    # A single dependency chain, with one ready step per turn.
     kg.add_node("Hypothesis_A", "Hypothesis")
     kg.add_node("Measurement_B", "Measurement")
     kg.add_node("Instrument_C", "Instrument")
     kg.add_node("Lab_D", "Lab")
     kg.add_node("Dataset_B", "Dataset")
     kg.assert_edge("Hypothesis_A", "requires", "Measurement_B", strict=True)
-    kg.assert_edge("Hypothesis_A", "requires", "Dataset_B", strict=True)
-    kg.assert_edge("Measurement_B", "requires", "Instrument_C", strict=True)
+    kg.assert_edge("Measurement_B", "requires", "Dataset_B", strict=True)
+    kg.assert_edge("Dataset_B", "requires", "Instrument_C", strict=True)
     kg.assert_edge("Instrument_C", "located_at", "Lab_D", strict=True)
     kg.assert_edge("Instrument_C", "requires", "Lab_D", strict=True)  # access is a prerequisite
 
@@ -92,9 +91,6 @@ def build_agent(kg: KnowledgeGraph, llm=None) -> KGAgent:
             "hypothesis evaluated": claims("Result_R12 supports Hypothesis_A"),
         },
         dependencies_by_node={},
-        # Asked which ready step goes first, the model front-loads lab access (the
-        # longest lead time); the planner alone would have loaded Dataset_B first.
-        action=lambda plan, context: "secure_lab_access(Lab_D)",
     )
     agent = KGAgent(kg, llm, execute="stage",
                     policy=IngestPolicy(accept_unknown=True, unknown_confidence=0.6))
@@ -105,10 +101,6 @@ def build_agent(kg: KnowledgeGraph, llm=None) -> KGAgent:
         return ("lab access granted: Lab_D satisfied_by Access_Badge_17. "
                 "A note on the bench suggests Protein_G activates Protein_H.")
 
-    @agent.action("load_dataset")
-    def load_dataset(agent: KGAgent, step) -> str:
-        return f"dataset loaded: {step.node}"
-
     @agent.action("acquire_instrument")
     def acquire_instrument(agent: KGAgent, step) -> ActionResult:
         attempts[step.node] = attempts.get(step.node, 0) + 1
@@ -117,6 +109,10 @@ def build_agent(kg: KnowledgeGraph, llm=None) -> KGAgent:
                                 {"retry": True})
         return ActionResult(step, True,
                             "instrument booked: Instrument_C located_at Lab_D")
+
+    @agent.action("load_dataset")
+    def load_dataset(agent: KGAgent, step) -> str:
+        return f"dataset loaded: {step.node}"
 
     @agent.action("run_measurement")
     def run_measurement(agent: KGAgent, step) -> str:
@@ -139,10 +135,9 @@ def demo_planning(kg: KnowledgeGraph, llm=None) -> None:
     print(plan_for(kg, goal).render())
 
     agent = build_agent(kg, llm)
-    print(f"\nclaim extraction and step choice by: {type(agent.llm).__name__}"
+    print(f"\nclaim extraction by: {type(agent.llm).__name__}"
           + (f" ({agent.llm.model})" if hasattr(agent.llm, "model") else ""))
-    print("Each turn acts on the whole ready frontier (execute='stage'); with two steps ready")
-    print("the model is asked which goes first, and only a step on the plan is accepted.")
+    print("Each turn has one ready step; the agent acts, updates the graph, and replans.")
     print("\n--- running the loop: observe -> update -> query -> plan -> choose -> act -> observe ---")
     run = agent.run(goal)
     print(run.render())
