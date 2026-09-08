@@ -1,0 +1,16 @@
+flowchart LR
+  dataset["dataset [Dataset benchmark_version=1 seed=42 splits={'train': 80, 'validation': 40, 'test': 40} status=complete]"]
+  evaluation_quadratic["evaluation:quadratic [Evaluation source=evaluator status=complete validation_mse=0.009755466640354715]"]
+  experiment_quadratic["experiment:quadratic [Experiment degree=2 penalty=0 status=complete]"]
+  hypothesis_quadratic["hypothesis:quadratic [Hypothesis conclusion=observed_improvement rationale=The linear baseline has validation MSE 0.355534; test curvature before adding higher-degree terms. status=evaluated text=A quadratic term will lower validation MSE by at least 1%]"]
+  hypothesis_quadratic_ridge_001["hypothesis:quadratic-ridge-001 [Hypothesis conclusion=no_observed_improvement rationale=Degree 2 reduced validation MSE to 0.00975547. Hold degree fixed and test whether coefficient shrinkage reduces estimation variance. status=evaluated text=Mild ridge regularization will lower the best validation MSE by at least 1%]"]
+  model_quadratic["model:quadratic [Model coefficients=[0.5086106322016009, 1.4975289417146875, -2.0258356304062892] source=evaluator]"]
+  study["study [Study interpretation=Fixed synthetic benchmark; validation comparisons are not statistical proof. status=complete test_mse=0.010144400100979958 unused_budget=0 validation_mse=0.009713343018628464 winner_id=cubic-ridge-001]"]
+  evaluation_quadratic -->|assesses| hypothesis_quadratic
+  evaluation_quadratic -->|evaluates| model_quadratic
+  evaluation_quadratic -->|requires| experiment_quadratic
+  experiment_quadratic -->|produced| model_quadratic
+  experiment_quadratic -->|tests| hypothesis_quadratic
+  experiment_quadratic -->|uses_dataset| dataset
+  hypothesis_quadratic_ridge_001 -->|compared_with| experiment_quadratic
+  study -->|contains| experiment_quadratic

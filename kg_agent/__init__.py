@@ -25,13 +25,14 @@ __all__ = [
     "KnowledgeGraph", "LLM", "LoopRecord", "Node", "Ontology", "OpenRouterError",
     "OpenRouterLLM", "Plan", "PlanStep", "Resolution",
     "RelationSpec", "RunResult", "ScriptedLLM", "Status", "Usage", "Verdict", "claims",
-    "default_ontology", "ingest", "plan_for", "verify", "verify_all",
+    "default_ontology", "ingest", "plan_for", "render", "to_dot", "to_mermaid", "verify", "verify_all",
 ]
 __version__ = "0.1.0"
 
 
 # Imported lazily so `python -m kg_agent.openrouter` does not double-import the module.
 _OPENROUTER = {"DEFAULT_MODEL", "OpenRouterError", "OpenRouterLLM", "Usage"}
+_VISUALIZE = {"render", "to_dot", "to_mermaid"}
 
 
 def __getattr__(name: str):
@@ -39,6 +40,10 @@ def __getattr__(name: str):
         from . import openrouter
 
         return getattr(openrouter, name)
+    if name in _VISUALIZE:
+        from . import visualize
+
+        return getattr(visualize, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

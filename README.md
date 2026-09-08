@@ -279,6 +279,29 @@ See [the full guide](docs/research-cycle.md) for persistence, error handling, an
 research-session rules. The existing `KGAgent` / OpenRouter integration below is a
 separate way to operate the core graph loop.
 
+## Draw the knowledge graph
+
+Export any saved graph, or a research session's `state.json`, as Mermaid or
+Graphviz DOT. The output is text, so it works without installing a renderer:
+
+```bash
+uv run python -m kg_agent.visualize research-runs/demo-rerun/state.json \
+  --format mermaid --focus experiment:quadratic --hops 1 > graph.mmd
+uv run python -m kg_agent.visualize research-runs/demo-rerun/state.json \
+  --format dot --output graph.dot
+```
+
+Open `graph.mmd` in a Mermaid-compatible Markdown viewer, or render `graph.dot`
+with Graphviz (`dot -Tsvg graph.dot -o graph.svg`). Use `--include-retracted`
+to show retracted evidence as dashed gray edges. `--focus NODE --hops N` limits
+the drawing to a bounded neighborhood. The Python API is also available:
+
+```python
+from kg_agent.visualize import to_mermaid
+
+print(to_mermaid(kg, focus="experiment:quadratic", hops=1))
+```
+
 ## Connecting a model (OpenRouter)
 
 ```bash
@@ -365,4 +388,5 @@ class MyLLM:
 | `kg_agent/research_domain.py` | research ontology and executable contracts |
 | `kg_agent/research_experiment.py` | fixed synthetic data, polynomial fitting, and MSE evaluation |
 | `kg_agent/research_explain.py` | evidence-derived step descriptions |
+| `kg_agent/visualize.py` | Mermaid and Graphviz DOT graph exports |
 | `docs/research-cycle.md` | instructions for conducting research with a coding agent |
